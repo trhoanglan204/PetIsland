@@ -1,0 +1,47 @@
+﻿@model IEnumerable<Pets>
+@{
+	ViewData["Title"] = "Pet";
+}
+<h1>Pets</h1>
+
+<p>
+    <a asp-action="Add">Create New</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Tags)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ImageUrl)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var pet in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => pet.Tags)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => pet.Name)
+                </td>
+                <td>
+                    <img src="/images/pets/@pet.ImageUrl" width="100" alt="@pet.Name" class="img-thumbnail" />
+                </td>
+                <td style="white-space:nowrap">
+                    <a class="btn btn-primary btn-sm" asp-controller="Pets" asp-action="Edit" asp-route-id="@pet.PetId">Edit</a> |
+                    <a class="btn btn-primary btn-sm" asp-controller="Pets" asp-action="Details" asp-route-id="@pet.PetId">Details</a> |
+                    <a class="btn btn-primary btn-sm" asp-controller="Pets" asp-action="Delete" asp-route-id="@pet.PetId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

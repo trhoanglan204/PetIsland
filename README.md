@@ -8,3 +8,16 @@
 - explain abcxyz
 ## Usage
 - ...
+<details>
+<summary><b>Phan cong nhiem vu</b></summary>
+
+- Khoi va HA nen doc so qua het cac cshtml de xem cac comment keu can bo sung gi
+    + phan cong tim hieu them: js, css de add cac chuc nang tu javascript vao cshtml (xem vi du o code View/_Layout.cshtml_)
+	+ file .css dc sua nam trong wwwroot/css (k duoc sua trong wwwroot/lib/bootstrap/dist/css)
+	+ file .js dc sua nam trong wwwroot/js (k duoc sua trong wwwroot/lib/bootstrap/dist/js)
+
+- Ma Thieu on lai sql, tim hieu cach host MVC free
+	+ xem cach add db trong Data/Migrations
+	+ https://www.youtube.com/watch?v=9VY4WNJWS6E&t=9s
+
+</details>
