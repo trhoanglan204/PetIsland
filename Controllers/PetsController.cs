@@ -3,10 +3,12 @@
 public class PetsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly IWebHostEnvironment _env;
 
-    public PetsController(ApplicationDbContext context)
+    public PetsController(ApplicationDbContext context, IWebHostEnvironment env)
     {
-        _context = context;
+        this._context = context;
+        this._env = env;
     }
 
     //GET: Pets
@@ -43,15 +45,36 @@ public class PetsController : Controller
     [HttpPost]
     [Authorize]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Add(Pets item)
+    public async Task<IActionResult> Add(PetDto item)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            _context.Pets.Add(item);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return View(item);
+
         }
-        return View(item);
+        string newFileName = string.Empty;
+        if (item.ImageFile != null)
+        {
+            newFileName = DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(item.ImageFile!.FileName);
+            string imageFilePath = _env.WebRootPath + "/images/pets/" + newFileName;
+            using var stream = System.IO.File.Create(imageFilePath);
+            await item.ImageFile!.CopyToAsync(stream);
+        }
+
+        Pets pet = new()
+        {
+            Name = item.Name,
+            ImageUrl = newFileName,
+            Sex = item.Sex,
+            Color = item.Color,
+            Age = item.Age,
+            Description = item.Description,
+            Tags = item.Tags,
+        };
+
+        _context.Pets.Add(pet);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
     }
 
     [Authorize]

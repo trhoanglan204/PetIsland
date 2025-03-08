@@ -224,30 +224,6 @@ namespace PetIsland.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("PetIsland.Models.Joke", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Author")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("JokeText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Joke");
-                });
-
             modelBuilder.Entity("PetIsland.Models.Pets", b =>
                 {
                     b.Property<int>("PetId")
@@ -256,13 +232,15 @@ namespace PetIsland.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PetId"));
 
-                    b.Property<int?>("Age")
-                        .HasColumnType("int");
+                    b.Property<double>("Age")
+                        .HasColumnType("float");
 
                     b.Property<string>("Color")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImageUrl")
@@ -271,9 +249,10 @@ namespace PetIsland.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<int?>("Sex")
+                    b.Property<int>("Sex")
                         .HasColumnType("int");
 
                     b.Property<int>("Tags")
@@ -311,9 +290,6 @@ namespace PetIsland.Data.Migrations
                     b.Property<double>("Price")
                         .HasPrecision(10, 2)
                         .HasColumnType("float(10)");
-
-                    b.Property<int>("Stocks")
-                        .HasColumnType("int");
 
                     b.Property<int>("Tags")
                         .HasColumnType("int");

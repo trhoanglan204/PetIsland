@@ -1,22 +1,16 @@
 ﻿namespace PetIsland.Models;
 
-public class Pets
+public class PetDto
 {
-    [Key]
-    public int PetId { get; set; }
-    [Required, MaxLength(100)]
+    [Required]
     public string Name { get; set; } = string.Empty;
-    public string ImageUrl { get; set; } = string.Empty;
+    public IFormFile? ImageFile { get; set; }
     [Required]
     public Initialize.Sexual Sex { get; set; } //0 Boy : 1 Girl  
     public string Color { get; set; } = string.Empty;
+    [Required]
     public double Age { get; set; }
-    public string Description { get; set; } = string.Empty;
+    [Required]
     public Initialize.TypePet Tags { get; set; }
-
-    public Pets() //Constructor
-    {
-    }
+    public string Description { get; set; } = string.Empty;
 }
-
-

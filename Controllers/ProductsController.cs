@@ -1,4 +1,6 @@
-﻿namespace PetIsland.Controllers;
+﻿using Microsoft.IdentityModel.Tokens;
+
+namespace PetIsland.Controllers;
 
 #pragma warning disable IDE0290
 
@@ -49,22 +51,21 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(ProductDto item)
     {
-        if (item.ImageFile == null)
-        {
-            ModelState.AddModelError("ImageFile", "The image file is required");
-        }
         if (!ModelState.IsValid)
         {
             return View(item);
 
         }
-        string newFileName = DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(item.ImageFile!.FileName);
-        string imageFilePath = _env.WebRootPath + "/images/products/" + newFileName;
-        using (var stream = System.IO.File.Create(imageFilePath))
+        string newFileName = string.Empty;
+        if (item.ImageFile != null)
         {
+            newFileName = DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(item.ImageFile!.FileName);
+            string imageFilePath = _env.WebRootPath + "/images/products/" + newFileName;
+            using var stream = System.IO.File.Create(imageFilePath);
             await item.ImageFile!.CopyToAsync(stream);
         }
-        Products product = new Products
+
+        Products product = new()
         {
             Name = item.Name,
             ImageUrl = newFileName,
