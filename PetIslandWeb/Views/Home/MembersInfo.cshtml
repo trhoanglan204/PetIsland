@@ -1,0 +1,25 @@
+﻿@model List<GroupMemberModel>
+@{
+    ViewBag.Title = "Thong Tin Nhom";
+    // Layout = "~/Views/Shared/_LayoutFrontEnd.cshtml";
+}
+
+<div class="oauth"> 
+    <h4>Thông tin các thành viên trong nhóm :</h4>
+    <hr />
+    <table class="table-bordered group">
+        <tr>
+            <th></th>
+            <th id="MSSV">MSSV</th>
+            <th id="hovaten">Họ và Tên</th>
+        </tr>
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            <tr>
+				<td img="https://placehold.co/500x600/png" alt="Avatar"></td>"
+                <td>@Model[i].MSSV</td>
+                <td>@Model[i].Name</td>
+            </tr>
+        }
+    </table>
+</div>

@@ -19,5 +19,11 @@
 - Ma Thieu on lai sql, tim hieu cach host MVC free
 	+ xem cach add db trong Data/Migrations
 	+ https://www.youtube.com/watch?v=9VY4WNJWS6E&t=9s
+	+ tao gmail cho project
+		+ https://console.cloud.google.com/ (OAuth)
+		+ EmailSender:
+			+ Application Password (Google Setting) (simple)
+			+ app.sendgrid.com (for real project - complex)
+
 
 </details>
