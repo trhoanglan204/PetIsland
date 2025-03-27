@@ -24,6 +24,7 @@
 		+ EmailSender:
 			+ Application Password (Google Setting) (simple)
 			+ app.sendgrid.com (for real project - complex)
+		+ nghien cuu Momo|VNPay test service (Payment Method)
 
 
 </details>
