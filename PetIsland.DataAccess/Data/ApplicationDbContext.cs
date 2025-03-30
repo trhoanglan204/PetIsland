@@ -12,10 +12,10 @@ public class ApplicationDbContext : IdentityDbContext<AppUserModel>
     {
     }
 
-    //protected override void OnModelCreating(ModelBuilder builder)
-    //{
-    //    //base.OnModelCreating(builder);
-    //}
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+    }
     public DbSet<PetModel> Pets { get; set; }
     public DbSet<PetCategoryModel> PetCategory { get; set; }
     public DbSet<ProductModel> Products { get; set; }

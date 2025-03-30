@@ -12,34 +12,32 @@ using Microsoft.AspNetCore.Identity;
 
 #pragma warning disable IDE0290
 
-namespace PetIslandWeb.Areas.Customer.Controllers;
-
-[Area("Customer")]
+namespace PetIslandWeb.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly IUnitOfWork _unitOfWork;
     private static List<GroupMemberModel>? ListMembers;
-    //private readonly UserManager<AppUserModel> _userManager;
+    private readonly UserManager<AppUserModel> _userManager;
 
-    public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork)
+    public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork, UserManager<AppUserModel> userManager)
     {
         _logger = logger;
         _unitOfWork = unitOfWork;
-        //_userManager = userManager;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        //var viewModel = new HomeViewModel
-        //{
-        //    Products = await _unitOfWork.Product.GetAllAsync(includeProperties: "ProductCategory,ProductImages"),
-        //    Pets = await _unitOfWork.Pet.GetAllAsync(includeProperties: "PetCategory,PetImages")
-        //};
-        //var slider = (await _unitOfWork.Slider.GetAllAsync(s => s.Status == 1)).ToList();
-        //ViewBag.Slider = slider;
-        //return View(viewModel);
-        return View();
+        var viewModel = new HomeViewModel
+        {
+            Products = await _unitOfWork.Product.GetAllAsync(includeProperties: "ProductCategory,ProductImages"),
+            Pets = await _unitOfWork.Pet.GetAllAsync(includeProperties: "PetCategory,PetImages")
+        };
+        var slider = (await _unitOfWork.Slider.GetAllAsync(s => s.Status == 1)).ToList();
+        ViewBag.Slider = slider;
+        return View(viewModel);
+        //return View();
     }
 
     public async Task<IActionResult> Details(int productId)
@@ -93,25 +91,25 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> AddWishlist(int Id, WishlistModel wishlistmodel)
     {
-        //var user = await _userManager.GetUserAsync(User);
+        var user = await _userManager.GetUserAsync(User);
 
-        //var wishlistProduct = new WishlistModel
-        //{
-        //    ProductId = Id,
-        //    UserId = user!.Id
-        //};
+        var wishlistProduct = new WishlistModel
+        {
+            ProductId = Id,
+            UserId = user!.Id
+        };
 
-        //_unitOfWork.Wishlist.Add(wishlistProduct);
-        //try
-        //{
-        //    await _unitOfWork.SaveAsync();
-        //    return Ok(new { success = true, message = "Add to wishlisht Successfully" });
-        //}
-        //catch (Exception)
-        //{
-        //    return StatusCode(500, "An error occurred while adding to wishlist table.");
-        //}
-        return View();
+        _unitOfWork.Wishlist.Add(wishlistProduct);
+        try
+        {
+            await _unitOfWork.SaveAsync();
+            return Ok(new { success = true, message = "Add to wishlisht Successfully" });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "An error occurred while adding to wishlist table.");
+        }
+        //return View();
 
     }
 

@@ -49,7 +49,7 @@ public class UserController : Controller
     {
         var roles = await _roleManager.Roles.ToListAsync();
         ViewBag.Roles = new SelectList(roles, "Id", "Name");
-        return View(new AppUserModel());
+        return View(roles);
     }
 
     [HttpGet]
@@ -128,7 +128,7 @@ public class UserController : Controller
             {
                 var createUser = await _userManager.FindByEmailAsync(user.Email); //tìm user dựa vào email
                 var userId = createUser.Id; // lấy user Id
-                var role = _roleManager.FindByIdAsync(user.RoleId); //lấy RoleId
+                var role = _roleManager.FindByIdAsync(user.Role); //lấy Role
                 var addToRoleResult = await _userManager.AddToRoleAsync(createUser, role.Result.Name);
                 if (!addToRoleResult.Succeeded)
                 {

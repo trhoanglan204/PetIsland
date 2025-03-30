@@ -14,7 +14,8 @@ using Microsoft.AspNetCore.Hosting;
 namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
-//[Authorize(Roles = SD.Role_Admin)]
+[Authorize(Roles = SD.Role_Admin)]
+[Authorize(Roles = SD.Role_Employee)]
 [Route("Admin/Product")]
 public class ProductController : Controller
 {
@@ -32,7 +33,7 @@ public class ProductController : Controller
     [Route("Index")]
     public async Task<IActionResult> Index()
     {
-        //List<ProductModel> objCatagoryList = (await _unitOfWork.Product.GetAllAsync(includeProperties:"ProductCategory")).ToList();
+        //List<ProductModel> objCatagoryList = (await _unitOfWork.Product.GetAllAsync(includeProperties: "ProductCategory")).ToList();
         //return View(objCatagoryList);
         return View(await _context.Products.OrderByDescending(p => p.Id).Include(c => c.ProductCategory).ToListAsync());
     }

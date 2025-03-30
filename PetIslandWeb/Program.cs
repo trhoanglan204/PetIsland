@@ -47,19 +47,18 @@ namespace PetIslandWeb
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
-            //builder.Services.AddAuthentication(options =>
-            //{
-            //    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            //    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            //    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-
-            //}).AddCookie().AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
-            //{
-            //    options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value!;
-            //    options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value!;
-            //});
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            }).AddCookie().AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            {
+                options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value!;
+                options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value!;
+            });
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            //builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+            builder.Services.AddScoped<IDbInitializer, DbInitializer>();
             builder.Services.AddTransient<IEmailSender, EmailSender>();
 
             var app = builder.Build();
@@ -71,7 +70,7 @@ namespace PetIslandWeb
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-            //app.UseStatusCodePagesWithReExecute("~/Views/Shared/NotFoundPage");
+            app.UseStatusCodePagesWithReExecute("~/Views/Shared/NotFoundPage");
             //app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
             app.UseStaticFiles();
             app.UseHttpsRedirection();
@@ -80,14 +79,14 @@ namespace PetIslandWeb
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSession();
-            //SeedDatabase();
+            SeedDatabase();
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
-            //app.MapControllerRoute(
-            //name: "Areas",
-            //pattern: "{areas:exists}/{controller=Product}/{action=Index}/{id?}");
+            app.MapControllerRoute(
+            name: "Areas",
+            pattern: "{areas:exists}/{controller=Product}/{action=Index}/{id?}");
 
             app.MapRazorPages();
 

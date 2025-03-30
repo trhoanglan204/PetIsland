@@ -59,11 +59,12 @@ public class DbInitializer : IDbInitializer
                 StreetAddress = "17A Cong Hoa",
                 State = "DK",
                 PostalCode = "90001",
-                City = "HCM"
+                City = "HCM",
+                Role = SD.Role_Admin
             }, "Admin@123*").GetAwaiter().GetResult();
 
 
-            AppUserModel user = _db.ApplicationUsers.FirstOrDefault(u => u.Email == "admin@kma.com");
+            AppUserModel user = _db.ApplicationUsers.FirstOrDefault(u => u.Email == "admin@kma.com")!;
             _userManager.AddToRoleAsync(user, SD.Role_Admin).GetAwaiter().GetResult();
 
         }
