@@ -134,7 +134,7 @@ public class HomeController : Controller
                 {
                     Name = "Nguyen Anh Khoi",
                     MSSV = "AT19N0121",
-                    ImageUrl = "shin_uncencored.jpg",
+                    ImageUrl = "shin_uncensored.jpg",
                 },
                 new GroupMemberModel
                 {
