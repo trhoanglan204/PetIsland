@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +19,9 @@ public class AccountController : Controller
 {
 	private readonly UserManager<AppUserModel> _userManager;
 	private readonly SignInManager<AppUserModel> _signInManager;
-	private readonly EmailSender _emailSender;
+	private readonly IEmailSender _emailSender;
 	private readonly ApplicationDbContext _context;
-	public AccountController(EmailSender emailSender, UserManager<AppUserModel> userManage,
+	public AccountController(IEmailSender emailSender, UserManager<AppUserModel> userManage,
 		SignInManager<AppUserModel> signInManager, ApplicationDbContext context)
 	{
 		_userManager = userManage;
@@ -111,7 +112,6 @@ public class AccountController : Controller
 			TempData["error"] = "Email not found or token is not right";
 			return RedirectToAction("ForgotPass", "Account");
 		}
-		return View();
 	}
 	public async Task<IActionResult> History()
 	{
@@ -145,8 +145,7 @@ public class AccountController : Controller
 		}
 		catch (Exception ex)
 		{
-
-			return BadRequest("An error occurred while canceling the order.");
+			return BadRequest($"An error occurred while canceling the order: {ex.Message}");
 		}
 
 
@@ -162,12 +161,12 @@ public class AccountController : Controller
 			Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(loginVM.Username, loginVM.Password, false, false);
 			if (result.Succeeded)
 			{
-				//TempData["success"] = "Đăng nhập thành công";
-				//var receiver = "demologin979@gmail.com";
-				//var subject = "Đăng nhập trên thiết bị thành công.";
-				//var message = "Đăng nhập thành công, trải nghiệm dịch vụ nhé.";
+				TempData["success"] = "Đăng nhập thành công";
+				var receiver = "demologin979@gmail.com";
+				var subject = "Đăng nhập trên thiết bị thành công.";
+				var message = "Đăng nhập thành công, trải nghiệm dịch vụ nhé.";
 
-				//await _emailSender.SendEmailAsync(receiver, subject, message);
+				await _emailSender.SendEmailAsync(receiver, subject, message);
 				return Redirect(loginVM.ReturnUrl ?? "/");
 			}
 			ModelState.AddModelError("", "Sai tài khoản hặc mật khẩu");
@@ -202,7 +201,6 @@ public class AccountController : Controller
 		return View(user);
 	}
 
-
 	public async Task<IActionResult> Logout(string returnUrl = "/")
 	{
 		await _signInManager.SignOutAsync();
@@ -220,8 +218,7 @@ public class AccountController : Controller
 			});
 	}
 
-	public async Task<IActionResult>
-	 GoogleResponse()
+	public async Task<IActionResult> GoogleResponse()
 	{
 		// Authenticate using Google scheme
 		var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);

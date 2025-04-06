@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
+using PetIsland.Utility;
 
 #pragma warning disable IDE0290
 
@@ -12,7 +13,7 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Route("Admin/Slider")]
-[Authorize(Roles = "Publisher,Author,Admin")]
+//[Authorize(Roles = SD.Role_Admin)]
 public class SliderController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -44,7 +45,7 @@ public class SliderController : Controller
 
             if (slider.ImageUpload != null)
             {
-                string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "media/sliders");
+                string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "images/sliders");
                 string imageName = Guid.NewGuid().ToString() + "_" + slider.ImageUpload.FileName;
                 string filePath = Path.Combine(uploadsDir, imageName);
 
@@ -80,26 +81,33 @@ public class SliderController : Controller
     [Route("Edit")]
     public async Task<IActionResult> Edit(int Id)
     {
-        SliderModel slider = await _context.Sliders.FindAsync(Id);
-
+        SliderModel? slider = await _context.Sliders.FindAsync(Id);
+        if (slider == null)
+        {
+            return NotFound();
+        }
         return View(slider);
     }
+
     [Route("Edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(SliderModel slider)
     {
-        var slider_existed = _context.Sliders.Find(slider.Id);
+        var slider_existed = await _context.Sliders.FindAsync(slider.Id);
+        if(slider_existed == null)
+        {
+            return NotFound();
+        }
         if (ModelState.IsValid)
         {
-
             if (slider.ImageUpload != null)
             {
-                string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "media/sliders");
+                string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "images/sliders");
                 string imageName = Guid.NewGuid().ToString() + "_" + slider.ImageUpload.FileName;
                 string filePath = Path.Combine(uploadsDir, imageName);
 
-                FileStream fs = new FileStream(filePath, FileMode.Create);
+                var fs = new FileStream(filePath, FileMode.Create);
                 await slider.ImageUpload.CopyToAsync(fs);
                 fs.Close();
                 slider_existed.Image = imageName;
@@ -134,11 +142,15 @@ public class SliderController : Controller
 
     public async Task<IActionResult> Delete(int Id)
     {
-        SliderModel slider = await _context.Sliders.FindAsync(Id);
-        if (!string.Equals(slider.Image, "noname.jpg"))
+        SliderModel? slider = await _context.Sliders.FindAsync(Id);
+        if (slider == null)
         {
-            string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "media/sliders");
-            string oldfilePath = Path.Combine(uploadsDir, slider.Image);
+            return NotFound();
+        }
+        if (!string.Equals(slider.Image, "null.jpg"))
+        {
+            string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "images/sliders");
+            string oldfilePath = Path.Combine(uploadsDir, slider.Image!);
             if (System.IO.File.Exists(oldfilePath))
             {
                 System.IO.File.Delete(oldfilePath);

@@ -12,9 +12,9 @@ public class SliderModel
     public required string Name { get; set; }
     [Required(ErrorMessage = "Yêu cầu không được bỏ trống mô tả")]
     public required string Description { get; set; }
-    public int? Status { get; set; }
+    public int Status { get; set; }
 
-    public string? Image { get; set; }
+    public string Image { get; set; } = "null.jpg";
 
     [NotMapped]
     [FileExtension]

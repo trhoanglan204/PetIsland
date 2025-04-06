@@ -1,4 +1,5 @@
 ﻿@{
+	var sliders = ViewBag.Sliders as IEnumerable<dynamic>;
 	int index = 0;
 }
 <style>
@@ -19,26 +20,24 @@
 						<li data-target="#slider-carousel" data-slide-to="2"></li>
 					</ol>
 
-					<div class="carousel-inner">
-						
-							
-						
-						 @foreach (var slider in ViewBag.Sliders)
-						{
-							<div class="item @(index == 0 ? "active" : "")">
-								
-								<div class="col-sm-12">
-									<img src="~/images/sliders/@slider.Image" class="girl img-responsive" alt="" />
-									
+					@if (sliders != null && sliders.Any())
+					{
+						<div class="carousel-inner">
+
+							@foreach (var slider in ViewBag.Sliders)
+							{
+								<div class="item @(index == 0 ? "active" : "")">
+
+									<div class="col-sm-12">
+										<img src="~/images/sliders/@slider.Image" class="girl img-responsive" alt="" />
+
+									</div>
 								</div>
-							</div>
-							index++;
-						}
+								index++;
+							}
 
-
-						
-
-					</div>
+						</div>
+					}
 
 					<a href="#slider-carousel" class="left control-carousel hidden-xs" data-slide="prev">
 						<i class="fa fa-angle-left"></i>

@@ -30,7 +30,8 @@ namespace PetIslandWeb
                 options.UseSqlServer(connectionPetIslandDbString);
             });
 
-            builder.Services.AddTransient<IEmailSender, EmailSender>();
+            builder.Services.AddScoped<IEmailSender, EmailSender>();
+            builder.Services.AddScoped<IDbInitializer,DbInitializer>();
 
             builder.Services.AddControllersWithViews();
 
@@ -99,7 +100,7 @@ namespace PetIslandWeb
                 app.UseHsts();
             }
 
-            app.UseStatusCodePagesWithReExecute("~/Views/Shared/NotFoundPage");
+            app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
             //app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
 
             app.UseSession();
@@ -119,9 +120,9 @@ namespace PetIslandWeb
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
-            app.MapControllerRoute(
-            name: "Areas",
-            pattern: "{areas:exists}/{controller=Product}/{action=Index}/{id?}");
+            //app.MapControllerRoute(
+            //name: "Areas",
+            //pattern: "{areas:exists}/{controller=Product}/{action=Index}/{id?}");
 
             app.MapRazorPages();
 

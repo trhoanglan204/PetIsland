@@ -159,7 +159,7 @@ public class HomeController : Controller
     {
         if (statuscode == 404)
         {
-            return View("NotFound");
+            return View("/Views/Shared/NotFoundPage");
         }
         else
         {

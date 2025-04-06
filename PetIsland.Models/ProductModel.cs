@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using PetIsland.Models.Validation;
-using Shopping_Tutorial.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -16,7 +15,7 @@ public partial class ProductModel
     public int SoldOut { get; set; }
     public int Quantity { get; set; }
     public string Slug { get; set; } = string.Empty;
-    public string Image { get; set; } = string.Empty;
+    public string Image { get; set; } = "null.jpg";
     public RatingModel Ratings { get; set; }
     public int BrandId { get; set; }
     public BrandModel Brand { get; set; }

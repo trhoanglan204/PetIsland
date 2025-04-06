@@ -14,7 +14,7 @@ public class PetModel
     [Required]
     public required Sexual Sex { get; set; } //0 Boy : 1 Girl  
     public string Slug { get; set; } = string.Empty;
-    public string Image { get; set; } = string.Empty;
+    public string Image { get; set; } = "null.jpg";
     public int PetCategoryId { get; set; }
     [ForeignKey("PetCategoryId")]
     [ValidateNever]

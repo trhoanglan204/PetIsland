@@ -13,18 +13,18 @@ public class DbInitializer : IDbInitializer
 {
     private readonly UserManager<AppUserModel> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly ApplicationDbContext _db;
+    private readonly ApplicationDbContext _context;
     private readonly ILogger<DbInitializer> _logger;
 
     public DbInitializer(
         UserManager<AppUserModel> userManager,
         RoleManager<IdentityRole> roleManager,
-        ApplicationDbContext db,
+        ApplicationDbContext context,
         ILogger<DbInitializer> logger)
     {
         _roleManager = roleManager;
         _userManager = userManager;
-        _db = db;
+        _context = context;
         _logger = logger;
     }
 
@@ -32,9 +32,9 @@ public class DbInitializer : IDbInitializer
     {
         try
         {
-            if (_db.Database.GetPendingMigrations().Any())
+            if (_context.Database.GetPendingMigrations().Any())
             {
-                _db.Database.Migrate();
+                _context.Database.Migrate();
             }
         }
         catch (Exception ex) 
@@ -60,13 +60,11 @@ public class DbInitializer : IDbInitializer
                 State = "DK",
                 PostalCode = "90001",
                 City = "HCM",
-                Role = SD.Role_Admin
+                Role = SD.Role_Admin,
             }, "Admin@123*").GetAwaiter().GetResult();
 
-
-            AppUserModel user = _db.ApplicationUsers.FirstOrDefault(u => u.Email == "admin@kma.com")!;
+            AppUserModel user = _context.ApplicationUsers.FirstOrDefault(u => u.Email == "admin@kma.com")!;
             _userManager.AddToRoleAsync(user, SD.Role_Admin).GetAwaiter().GetResult();
-
         }
 
         return;
