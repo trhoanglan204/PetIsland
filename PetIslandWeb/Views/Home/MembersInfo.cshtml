@@ -1,7 +1,7 @@
 ﻿@model List<GroupMemberModel>
 @{
     ViewBag.Title = "Thong Tin Nhom";
-    // Layout = "~/Views/Shared/_LayoutFrontEnd.cshtml";
+    Layout = "~/Views/Shared/_LayoutFrontEnd.cshtml";
 }
 
 <div class="oauth"> 
@@ -16,7 +16,7 @@
         @for (int i = 0; i < Model.Count; i++)
         {
             <tr>
-				<td img="https://placehold.co/500x600/png" alt="Avatar"></td>"
+				<td img="/images/members/@Model[i].ImageUrl" alt="Avatar"></td>"
                 <td>@Model[i].MSSV</td>
                 <td>@Model[i].Name</td>
             </tr>

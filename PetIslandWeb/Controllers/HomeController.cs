@@ -1,4 +1,3 @@
-using PetIsland.DataAccess.Repository.IRepository;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 #pragma warning disable IDE0290
 
@@ -16,14 +16,15 @@ namespace PetIslandWeb.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly IUnitOfWork _unitOfWork;
+    //private readonly IUnitOfWork _unitOfWork;
+    private readonly ApplicationDbContext _context;
     private static List<GroupMemberModel>? ListMembers;
     private readonly UserManager<AppUserModel> _userManager;
 
-    public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork, UserManager<AppUserModel> userManager)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<AppUserModel> userManager)
     {
         _logger = logger;
-        _unitOfWork = unitOfWork;
+        _context = context;
         _userManager = userManager;
     }
 
@@ -31,61 +32,12 @@ public class HomeController : Controller
     {
         var viewModel = new HomeViewModel
         {
-            Products = await _unitOfWork.Product.GetAllAsync(includeProperties: "ProductCategory,ProductImages"),
-            Pets = await _unitOfWork.Pet.GetAllAsync(includeProperties: "PetCategory,PetImages")
+            Products = await _context.Products.Include("ProductCategory").Include("Brand").ToListAsync(),
+            Pets = await _context.Pets.Include("PetCategory").ToListAsync()
         };
-        var slider = (await _unitOfWork.Slider.GetAllAsync(s => s.Status == 1)).ToList();
+        var slider = await _context.Sliders.Where(s => s.Status == 1).ToListAsync();
         ViewBag.Slider = slider;
         return View(viewModel);
-        //return View();
-    }
-
-    public async Task<IActionResult> Details(int productId)
-    {
-        var product = await _unitOfWork.Product.GetAsync(
-            u => u.Id == productId,
-            includeProperties: "Category,ProductImages"
-        );
-        if (product == null)
-        {
-            return NotFound();
-        }
-        ShoppingCart cart = new()
-        {
-            Product = product,
-            Count = 1,
-            ProductId = productId
-
-        };
-        return View(cart);
-    }
-
-    [HttpPost]
-    [Authorize]
-    public async Task<IActionResult> Details(ShoppingCart shoppingCart)
-    {
-        var claimsIdentity = (ClaimsIdentity)User.Identity;
-        var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
-        shoppingCart.ApplicationUserId = userId;
-        ShoppingCart? cartFromDb = await _unitOfWork.ShoppingCart.GetAsync(u => u.ApplicationUserId == userId && u.ProductId == shoppingCart.ProductId);
-        if (cartFromDb != null)
-        {
-            //shopping cart exists
-            cartFromDb.Count += shoppingCart.Count;
-            _unitOfWork.ShoppingCart.Update(cartFromDb);
-            await _unitOfWork.SaveAsync();
-        }
-        else
-        {
-            //add cart record
-            _unitOfWork.ShoppingCart.Add(shoppingCart);
-            await _unitOfWork.SaveAsync();
-            var cartItems = await _unitOfWork.ShoppingCart.GetAllAsync(u => u.ApplicationUserId == userId);
-            HttpContext.Session.SetInt32(SD.SessionCart,cartItems.Count());
-        }
-        TempData["success"] = "Cart updated successfully";
-
-        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -96,41 +48,42 @@ public class HomeController : Controller
         var wishlistProduct = new WishlistModel
         {
             ProductId = Id,
-            UserId = user!.Id
+            UserId = user!.Id,
         };
 
-        _unitOfWork.Wishlist.Add(wishlistProduct);
+        _context.Wishlist.Add(wishlistProduct);
         try
         {
-            await _unitOfWork.SaveAsync();
+            await _context.SaveChangesAsync();
             return Ok(new { success = true, message = "Add to wishlisht Successfully" });
         }
         catch (Exception)
         {
             return StatusCode(500, "An error occurred while adding to wishlist table.");
         }
-        //return View();
-
     }
 
     public async Task<IActionResult> DeleteWishlist(int Id)
     {
-        WishlistModel? wishlist = await _unitOfWork.Wishlist.GetAsync(s => s.Id == Id);
+        WishlistModel? wishlist = await _context.Wishlist.FindAsync(Id);
         if (wishlist == null)
         {
             return NotFound();
         }
 
-        _unitOfWork.Wishlist.Remove(wishlist);
-        await _unitOfWork.SaveAsync();
+        _context.Wishlist.Remove(wishlist);
+        await _context.SaveChangesAsync();
 
-        TempData["success"] = "Wishlist remove successfull";
+        TempData["success"] = "Wishlist remove successfully";
         return RedirectToAction("Wishlist", "Home");
     }
 
     public async Task<IActionResult> Wishlist()
     {
-        var wishlist_product = await _unitOfWork.Wishlist.GetWishlistModels();
+        var wishlist_product = await (from w in _context.Wishlist
+                                      join p in _context.Products on w.ProductId equals p.Id
+                                      select new { Product = p, Wishlists = w })
+                           .ToListAsync();
         return View(wishlist_product);
     }
 
@@ -147,9 +100,13 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> Search(string searchString)
     {
-        var pets = await _unitOfWork.Pet.GetAllAsync(u => u.Name.Contains(searchString) || u.Description.Contains(searchString));
-        var products = await _unitOfWork.Product.GetAllAsync(u => u.Name.Contains(searchString) || u.Description.Contains(searchString));
-        if (pets == null && products == null)
+        var pets = await _context.Pets
+            .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
+            .ToListAsync();
+        var products = await _context.Products
+            .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
+            .ToListAsync();
+        if (pets.Count == 0 && products.Count == 0)
         {
             return NotFound();
         }

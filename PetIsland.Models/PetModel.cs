@@ -10,21 +10,21 @@ public class PetModel
     [Key]
     public int Id { get; set; }
     [Required, MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; set; }
     [Required]
-    public Sexual Sex { get; set; } //0 Boy : 1 Girl  
-
+    public required Sexual Sex { get; set; } //0 Boy : 1 Girl  
+    public string Slug { get; set; } = string.Empty;
+    public string Image { get; set; } = string.Empty;
     public int PetCategoryId { get; set; }
     [ForeignKey("PetCategoryId")]
     [ValidateNever]
     public PetCategoryModel PetCategory { get; set; }
+
     public DateTime Age { get; set; }
     public string Description { get; set; } = string.Empty;
-    [ValidateNever]
-    public List<PetImageModel>? PetImages { get; set; }
 
     [NotMapped]
-    public IFormFile? ImageUrl { get; set; }
+    public IFormFile? ImageUpload { get; set; }
     [NotMapped]
     public string AgeDisplay
     {
@@ -49,8 +49,8 @@ public class PetModel
     public string SexDisplay => Sex == Sexual.Boy ? "Boy" : "Girl";
 }
 
-public enum Sexual : int 
+public enum Sexual : int
 {
-Boy,
-Girl,
+    Boy,
+    Girl,
 }

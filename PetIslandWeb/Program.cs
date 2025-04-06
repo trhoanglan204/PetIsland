@@ -1,5 +1,3 @@
-using PetIsland.DataAccess.Repository.IRepository;
-using PetIsland.DataAccess.Repository;
 using PetIsland.DataAccess.Data;
 using PetIsland.Utility;
 using PetIsland.DataAccess.DbInitializer;
@@ -9,6 +7,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using PetIsland.Models;
+using PetIsland.Models.Momo;
+using PetIslandWeb.Services.Momo;
+using PetIslandWeb.Services.Vnpay;
 
 namespace PetIslandWeb
 {
@@ -18,12 +19,28 @@ namespace PetIslandWeb
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            //Connect MomoAPI
+            //builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
+            //builder.Services.AddScoped<IMomoService, MomoService>();
+
             var connectionPetIslandDbString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnectionPetIslandDB' not found.");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(connectionPetIslandDbString);
+            });
+
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+            builder.Services.AddControllersWithViews();
+
+            builder.Services.AddDistributedMemoryCache();
+
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(100);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
             });
 
             builder.Services.AddIdentity<AppUserModel, IdentityRole>(options =>
@@ -38,15 +55,7 @@ namespace PetIslandWeb
                 //options.Password.RequiredLength = 8;
                 //options.User.RequireUniqueEmail = true;
             }).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
-            builder.Services.AddControllersWithViews();
-            builder.Services.AddRazorPages();
-            builder.Services.AddDistributedMemoryCache();
-            builder.Services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(100);
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -57,9 +66,28 @@ namespace PetIslandWeb
                 options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value!;
                 options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value!;
             });
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            builder.Services.AddRazorPages();
+
+            builder.Services.Configure<IdentityOptions>(options =>
+            {
+                // Password settings.
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 8;
+
+                // User settings.
+                options.User.RequireUniqueEmail = false;
+            });
+
+
+
             builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-            builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+            //Connect VNPay API
+            //builder.Services.AddScoped<IVnPayService, VnPayService>();
 
             var app = builder.Build();
 
@@ -70,15 +98,22 @@ namespace PetIslandWeb
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
             app.UseStatusCodePagesWithReExecute("~/Views/Shared/NotFoundPage");
             //app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
+
+            app.UseSession();
+
             app.UseStaticFiles();
-            app.UseHttpsRedirection();
 
             app.UseRouting();
+
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseSession();
+
+            app.UseWebSockets();
+            app.UseHttpsRedirection();
+
             SeedDatabase();
             app.MapControllerRoute(
                 name: "default",

@@ -10,10 +10,10 @@ using System.Drawing.Drawing2D;
 
 namespace PetIslandWeb.Controllers
 {
-	public class ProductController : Controller
+	public class PetController : Controller
 	{
 		private readonly ApplicationDbContext _dataContext;
-		public ProductController(ApplicationDbContext context)
+		public PetController(ApplicationDbContext context)
 		{
 			_dataContext = context;
 		}
@@ -36,21 +36,18 @@ namespace PetIslandWeb.Controllers
 		{
 			if (Id == null || Id <= 0) return RedirectToAction("Index");
 
-			var productsById = _dataContext.Products.
-				Include(p => p.Ratings).
-				Where(p => p.Id == Id).FirstOrDefault()!; //category = 4
-														 //related product
+			var petsById = _dataContext.Pets.Where(p => p.Id == Id).FirstOrDefault()!; 
 
 			var relatedProducts = await _dataContext.Products
-			.Where(p => p.ProductCategoryId == productsById.ProductCategoryId && p.Id != productsById.Id)
+			.Where(p => p.ProductCategoryId == petsById.PetCategoryId && p.Id != petsById.Id)
 			.Take(4)
 			.ToListAsync();
 
 			ViewBag.RelatedProducts = relatedProducts;
 
-			var viewModel = new ProductVM
+			var viewModel = new PetVM
 			{
-				Product = productsById,
+				Pet = petsById,
 			};
 
 			return View(viewModel);

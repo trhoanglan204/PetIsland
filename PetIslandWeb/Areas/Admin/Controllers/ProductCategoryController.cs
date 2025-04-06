@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PetIsland.DataAccess.Repository.IRepository;
+using Microsoft.EntityFrameworkCore;
+using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Utility;
 
@@ -9,48 +10,86 @@ using PetIsland.Utility;
 namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = SD.Role_Admin)]
+[Route("Admin/ProductCategory")]
+//[Authorize(Roles = SD.Role_Admin)]
 public class ProductCategoryController : Controller
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public ProductCategoryController(IUnitOfWork unitOfWork)
+    private readonly ApplicationDbContext _context;
+    public ProductCategoryController(ApplicationDbContext context)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
     }
-    public async Task<IActionResult> Index()
+    [Route("Index")]
+    public async Task<IActionResult> Index(int pg = 1)
     {
-        List<ProductCategoryModel> objCatagoryList = (await _unitOfWork.ProductCategory.GetAllAsync()).ToList();
+        var objCatagoryList = await _context.ProductCategory.ToListAsync();
 
-        return View(objCatagoryList);
+        const int pageSize = 10;
+        if (pg < 1)
+        {
+            pg = 1;
+        }
+
+        int resCount = objCatagoryList.Count;
+        var pager = new Paginate(resCount, pg, pageSize);
+        int recSkip = (pg -1) * pageSize;
+
+        var data = objCatagoryList.Skip(recSkip).Take(pager.PageSize).ToList();
+        ViewBag.Pager = pager;
+
+        return View(data);
     }
+
+    [Route("Create")]
     public IActionResult Create()
     {
         return View();
     }
-    [HttpPost]
-    public async Task<IActionResult> Create(ProductCategoryModel obj)
-    {
-        if (obj.Name != null && obj.Name.Equals("test", StringComparison.CurrentCultureIgnoreCase))
-        {
-            ModelState.AddModelError("Name", "Test is invalid value");
-        }
 
+    [Route("Create")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(ProductCategoryModel category)
+    {
         if (ModelState.IsValid)
         {
-            _unitOfWork.ProductCategory.Add(obj);
-            await _unitOfWork.SaveAsync();
-            TempData["success"] = "Category Created Successfully";
+            category.Slug = category.Name.Replace(" ", "-");
+            var slug = await _context.ProductCategory.FirstOrDefaultAsync(p => p.Slug == category.Slug);
+            if (slug != null)
+            {
+                ModelState.AddModelError("", "Danh mục đã có trong database");
+                return View(category);
+            }
+
+            _context.Add(category);
+            await _context.SaveChangesAsync();
+            TempData["success"] = "Thêm danh mục thành công";
             return RedirectToAction("Index");
+
         }
-        return View();
+        else
+        {
+            TempData["error"] = "Model có một vài thứ đang lỗi";
+            var errors = new List<string>();
+            foreach (var value in ModelState.Values)
+            {
+                foreach (var error in value.Errors)
+                {
+                    errors.Add(error.ErrorMessage);
+                }
+            }
+            string errorMessage = string.Join("\n", errors);
+            return BadRequest(errorMessage);
+        }
     }
+    [Route("Edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null || id == 0)
         {
             return NotFound();
         }
-        ProductCategoryModel? categoryFromDb = await _unitOfWork.ProductCategory.GetAsync(u => u.Id == id);
+        ProductCategoryModel? categoryFromDb = await _context.ProductCategory.FindAsync(id);
 
         if (categoryFromDb == null)
         {
@@ -58,47 +97,47 @@ public class ProductCategoryController : Controller
         }
         return View(categoryFromDb);
     }
+    [Route("Edit")]
     [HttpPost]
-    public async Task<IActionResult> Edit(ProductCategoryModel obj)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(ProductCategoryModel category)
     {
-
         if (ModelState.IsValid)
         {
-            _unitOfWork.ProductCategory.Update(obj);
-            await _unitOfWork.SaveAsync();
-            TempData["success"] = "Category Updated Successfully";
+            category.Slug = category.Name.Replace(" ", "-");
 
+            _context.Update(category);
+            await _context.SaveChangesAsync();
+            TempData["success"] = "Cập nhật danh mục thành công";
             return RedirectToAction("Index");
+
         }
-        return View();
+        else
+        {
+            TempData["error"] = "Model có một vài thứ đang lỗi";
+            var errors = new List<string>();
+            foreach (var value in ModelState.Values)
+            {
+                foreach (var error in value.Errors)
+                {
+                    errors.Add(error.ErrorMessage);
+                }
+            }
+            string errorMessage = string.Join("\n", errors);
+            return BadRequest(errorMessage);
+        }
     }
 
-    public async Task<IActionResult> Delete(int? id)
+    public async Task<IActionResult> Delete(int id)
     {
-        if (id == null || id == 0)
+        ProductCategoryModel? category = await _context.ProductCategory.FindAsync(id);
+        if (category == null)
         {
             return NotFound();
         }
-        ProductCategoryModel? categoryFromDb = await _unitOfWork.ProductCategory.GetAsync(u => u.Id == id);
-
-        if (categoryFromDb == null)
-        {
-            return NotFound();
-        }
-        return View(categoryFromDb);
-    }
-    [HttpPost, ActionName("Delete")]
-    public async Task<IActionResult> DeleteConfirmed(int? id)
-    {
-        ProductCategoryModel? obj = await _unitOfWork.ProductCategory.GetAsync(u => u.Id == id);
-        if (obj == null)
-        {
-            return NotFound();
-        }
-        _unitOfWork.ProductCategory.Remove(obj);
-        await _unitOfWork.SaveAsync();
-        TempData["success"] = "Category Deleted Successfully";
-
+        _context.ProductCategory.Remove(category);
+        await _context.SaveChangesAsync();
+        TempData["success"] = "Danh mục đã được xóa thành công";
         return RedirectToAction("Index");
     }
 }

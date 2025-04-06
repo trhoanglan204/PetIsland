@@ -16,7 +16,7 @@ public class CategoryController : Controller
     }
     public async Task<IActionResult> Index(string slug = "", string sort_by = "", string startprice = "", string endprice = "")
     {
-        ProductCategoryModel category = _dataContext.ProductCategory.Where(c => c.Slug == slug).FirstOrDefault();
+        ProductCategoryModel? category = _dataContext.ProductCategory.Where(c => c.Slug == slug).FirstOrDefault();
 
         if (category == null)
         {
@@ -28,7 +28,6 @@ public class CategoryController : Controller
         var count = await productsByCategory.CountAsync();
         if (count > 0)
         {
-            // Apply sorting based on sort_by parameter
             if (sort_by == "price_increase")
             {
                 productsByCategory = productsByCategory.OrderBy(p => p.Price);
@@ -47,10 +46,8 @@ public class CategoryController : Controller
             }
             else if (startprice != "" && endprice != "")
             {
-                decimal startPriceValue;
-                decimal endPriceValue;
 
-                if (decimal.TryParse(startprice, out startPriceValue) && decimal.TryParse(endprice, out endPriceValue))
+                if (decimal.TryParse(startprice, out decimal startPriceValue) && decimal.TryParse(endprice, out decimal endPriceValue))
                 {
                     productsByCategory = productsByCategory.Where(p => p.Price >= startPriceValue && p.Price <= endPriceValue);
                 }

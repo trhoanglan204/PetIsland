@@ -1,5 +1,4 @@
 ﻿namespace PetIsland.Models;
-
 public class Paginate
 {
     public int TotalItems { get; private set; } //tổng số items
