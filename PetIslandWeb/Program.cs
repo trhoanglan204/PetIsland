@@ -47,14 +47,14 @@ namespace PetIslandWeb
             builder.Services.AddIdentity<AppUserModel, IdentityRole>(options =>
             {
                 //options.SignIn.RequireConfirmedAccount = true;
-                //options.SignIn.RequireConfirmedEmail = false;
-                //options.SignIn.RequireConfirmedPhoneNumber = false;
-                //options.Password.RequireDigit = true;
-                //options.Password.RequireNonAlphanumeric = false;
-                //options.Password.RequireUppercase = true;
-                //options.Password.RequireLowercase = true;
-                //options.Password.RequiredLength = 8;
-                //options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+                options.Password.RequireDigit = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequiredLength = 8;
+                options.User.RequireUniqueEmail = true;
             }).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
             builder.Services.AddAuthentication(options =>
@@ -62,7 +62,17 @@ namespace PetIslandWeb
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            }).AddCookie().AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            }).AddCookie(options =>
+            {
+                options.LoginPath = "/Account/Login"; //Redirect to Login page if not authenticated
+                options.LogoutPath = "/Account/Logout"; //Redirect to Login page if not authenticated
+                options.AccessDeniedPath = "/Account/AccessDenied"; //optional
+                options.Cookie.HttpOnly = true;
+                options.SlidingExpiration = true;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; //Use Always for HTTPS
+                options.Cookie.SameSite = SameSiteMode.None; //Prevent Cross-Site Request Forgery (CSRF)
+            }).AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
             {
                 options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value!;
                 options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value!;
@@ -81,14 +91,23 @@ namespace PetIslandWeb
 
                 // User settings.
                 options.User.RequireUniqueEmail = false;
+
+                // Lockout settings.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
             });
-
-
 
             builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
             //Connect VNPay API
             //builder.Services.AddScoped<IVnPayService, VnPayService>();
+
+            builder.Services.AddHttpsRedirection(options =>
+            {
+                options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+                options.HttpsPort = 443;
+            });
 
             var app = builder.Build();
 
@@ -101,7 +120,6 @@ namespace PetIslandWeb
             }
 
             app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
-            //app.UseStatusCodePagesWithRedirects("/Home/Error?statuscode={0}");
 
             app.UseSession();
 

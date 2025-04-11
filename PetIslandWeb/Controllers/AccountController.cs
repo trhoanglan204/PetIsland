@@ -30,12 +30,43 @@ public class AccountController : Controller
 		_context = context;
 
 	}
+	[HttpGet]
 	public IActionResult Login(string returnUrl)
 	{
 		return View(new LoginViewModel { ReturnUrl = returnUrl });
 	}
 
-	[HttpPost]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(LoginViewModel loginVM)
+    {
+        if (ModelState.IsValid)
+        {
+            Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(loginVM.Username, loginVM.Password, isPersistent: true, lockoutOnFailure: true);
+            if (result.IsLockedOut)
+            {
+                ModelState.AddModelError("", "Tài khoản bị khóa trong 5 phút do đăng nhập sai quá nhiều lần.");
+                return View(loginVM);
+            }
+            if (result.Succeeded)
+            {
+                var user = await _userManager.FindByNameAsync(loginVM.Username)!;
+                TempData["success"] = "Đăng nhập thành công";
+                //var receiver = user!.Email;
+                //var subject = "Đăng nhập trên thiết bị thành công.";
+                //var message = "Đăng nhập thành công, trải nghiệm dịch vụ nhé.";
+                //await _emailSender.SendEmailAsync(receiver, subject, message);
+
+                await _signInManager.SignInAsync(user, isPersistent: true);
+
+                return Redirect(loginVM.ReturnUrl ?? "/");
+            }
+            ModelState.AddModelError("", "Sai tài khoản hoặc mật khẩu");
+        }
+        return View(loginVM);
+    }
+
+    [HttpPost]
 	public async Task<IActionResult> SendMailForgotPass(AppUserModel user)
 	{
 		var checkMail = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
@@ -152,29 +183,7 @@ public class AccountController : Controller
 		return RedirectToAction("History", "Account");
 	}
 
-	[HttpPost]
-	[ValidateAntiForgeryToken]
-	public async Task<IActionResult> Login(LoginViewModel loginVM)
-	{
-		if (ModelState.IsValid)
-		{
-			Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(loginVM.Username, loginVM.Password, false, false);
-			if (result.Succeeded)
-			{
-				TempData["success"] = "Đăng nhập thành công";
-				var receiver = "demologin979@gmail.com";
-				var subject = "Đăng nhập trên thiết bị thành công.";
-				var message = "Đăng nhập thành công, trải nghiệm dịch vụ nhé.";
-
-				await _emailSender.SendEmailAsync(receiver, subject, message);
-				return Redirect(loginVM.ReturnUrl ?? "/");
-			}
-			ModelState.AddModelError("", "Sai tài khoản hặc mật khẩu");
-		}
-		return View(loginVM);
-	}
-
-
+	[HttpGet]
 	public IActionResult Create()
 	{
 		return View();
@@ -191,7 +200,7 @@ public class AccountController : Controller
 			if (result.Succeeded)
 			{
 				TempData["success"] = "Tạo thành viên thành công";
-				return Redirect("/account/login");
+				return Redirect("/Account/Login");
 			}
 			foreach (IdentityError error in result.Errors)
 			{
@@ -249,11 +258,14 @@ public class AccountController : Controller
 			//nếu user ko tồn tại trong db thì tạo user mới với password hashed mặc định 1-9
 			var passwordHasher = new PasswordHasher<AppUserModel>();
 			var hashedPassword = passwordHasher.HashPassword(null, "123456789");
-			//username thay khoảng cách bằng dấu "-" và chữ thường hết
-			var newUser = new AppUserModel { UserName = emailName, Email = email };
-			newUser.PasswordHash = hashedPassword; // Set the hashed password cho user
-
-			var createUserResult = await _userManager.CreateAsync(newUser);
+            //username thay khoảng cách bằng dấu "-" và chữ thường hết
+            var newUser = new AppUserModel
+            {
+                UserName = emailName,
+                Email = email,
+                PasswordHash = hashedPassword // Set the hashed password cho user
+            };
+            var createUserResult = await _userManager.CreateAsync(newUser);
 			if (!createUserResult.Succeeded)
 			{
 				TempData["error"] = "Đăng ký tài khoản thất bại. Vui lòng thử lại sau.";
@@ -267,17 +279,12 @@ public class AccountController : Controller
 				TempData["success"] = "Đăng ký tài khoản thành công.";
 				return RedirectToAction("Index", "Home");
 			}
-
 		}
 		else
 		{
 			//Còn user đã tồn tại thì đăng nhập luôn với existingUser
 			await _signInManager.SignInAsync(existingUser, isPersistent: false);
 		}
-
 		return RedirectToAction("Login");
-
 	}
-
-
 }

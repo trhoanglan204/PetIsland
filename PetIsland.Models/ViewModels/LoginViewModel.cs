@@ -10,5 +10,5 @@ public class LoginViewModel
 
 	[DataType(DataType.Password), Required(ErrorMessage = "Vui lòng nhập password")]
 	public string Password { get; set; }
-	public string ReturnUrl { get; set; }
+	public string? ReturnUrl { get; set; }
 }

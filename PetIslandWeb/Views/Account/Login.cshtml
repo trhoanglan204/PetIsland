@@ -12,7 +12,10 @@
 					<!--login form-->
 					<h2>Login to your account</h2>
 					<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-					<form asp-action="Login" asp-controller="Account">
+					<form asp-action="Login" asp-controller="Account" method="post">
+						@Html.AntiForgeryToken()
+
+						<input type="hidden" asp-for="ReturnUrl" />
 
 						<div class="form-group">
 							<label>Username</label>
@@ -26,7 +29,7 @@
 							<span asp-validation-for="Password" class="text-danger"></span>
 						</div>
 
-						<button class="btn btn-default">Login</button><br />
+						<button type="submit" class="btn btn-default">Login</button><br />
 						<a asp-action="ForgotPass" asp-controller="Account">Forgot Password</a><br />
 						<a asp-action="LoginByGoogle" asp-controller="Account">Login Google</a><br />
 						<a asp-action="Create" class="btn btn-primary" asp-controller="Account">Register</a>

@@ -48,7 +48,7 @@ public class DbInitializer : IDbInitializer
             _roleManager.CreateAsync(new IdentityRole(SD.Role_Customer)).GetAwaiter().GetResult();
             _roleManager.CreateAsync(new IdentityRole(SD.Role_Employee)).GetAwaiter().GetResult();
             _roleManager.CreateAsync(new IdentityRole(SD.Role_Admin)).GetAwaiter().GetResult();
-
+            
             //if roles are not created, then we will create admin user as well
             _userManager.CreateAsync(new AppUserModel
             {

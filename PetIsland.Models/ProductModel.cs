@@ -27,7 +27,6 @@ public partial class ProductModel
     [Required(ErrorMessage = "Product's price should be filled in")]
     [Range(1, double.MaxValue, ErrorMessage = "Price should be greater than $0.01")]
     public decimal Price { get; set; }
-
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
     [NotMapped]
