@@ -2,7 +2,7 @@
 
 namespace PetIsland.Models.ViewModels;
 
-public class LoginViewModel
+public class LoginVM
 {
 	public int Id { get; set; }
 	[Required(ErrorMessage = "Vui lòng nhập user name")]

@@ -20,7 +20,7 @@
 	<script src="js/html5shiv.js"></script>
 	<script src="js/respond.min.js"></script>
 	<![endif]-->
-	<link rel="shortcut icon" href="images/ico/favicon.ico">
+	<link rel="shortcut icon" href="images/favicon.ico">
 	<link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/ico/apple-touch-icon-144-precomposed.png">
 	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/ico/apple-touch-icon-114-precomposed.png">
 	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/ico/apple-touch-icon-72-precomposed.png">
@@ -73,8 +73,8 @@
 									<span class="caret"></span>
 								</button>
 								<ul class="dropdown-menu">
-									<li><a href="#">Canada</a></li>
-									<li><a href="#">UK</a></li>
+									<li><a href="#">US</a></li>
+									<li><a href="#">VietNam</a></li>
 								</ul>
 							</div>
 
@@ -84,8 +84,8 @@
 									<span class="caret"></span>
 								</button>
 								<ul class="dropdown-menu">
-									<li><a href="#">Canadian Dollar</a></li>
-									<li><a href="#">Pound</a></li>
+									<li><a href="#">Dollar</a></li>
+									<li><a href="#">VND</a></li>
 								</ul>
 							</div>
 						</div>
@@ -93,16 +93,11 @@
 					<div class="col-sm-8">
 						<div class="shop-menu pull-right">
 							<ul class="nav navbar-nav">
-
-								<li><a asp-action="Index" asp-controller="Cart"><i class="fa fa-shopping-cart"></i> Cart</a></li>
-
 								@if (User.Identity != null && User.Identity.IsAuthenticated)
 								{
-									<li><a asp-action="Index" asp-controller="Cart"><i class="fa fa-crosshairs"></i> Checkout</a></li>
-									<li><a asp-action="History" asp-controller="Account"><i class="fa fa-user"></i> Account</a></li>
-									<li><a asp-action="Wishlist" asp-controller="Home"><i class="fa fa-heart"></i> Wishlist</a></li>
-									<li><a asp-action="Compare" asp-controller="Home"><i class="fa fa-star"></i> Compare</a></li>
-									<li><a asp-controller="Dashboard" asp-action="Index" asp-area="Admin"><i class="fa fa-lock"></i>Admin CMS</a></li>
+									<li><a asp-action="Index" asp-controller="Cart"><i class="fa fa-shopping-cart"></i> Cart</a></li>
+									<li><a asp-controller="Account" asp-action="History"><i class="fa fa-user"></i> Account</a></li>
+									<li><a asp-controller="Home" asp-action="Wishlist"><i class="fa fa-heart"></i> Wishlist</a></li>
 									<li><a asp-controller="Realtime" asp-action="Index"><i class="fa fa-comment"></i>Chat</a></li>
 									<li><a asp-controller="Account" asp-action="Logout"><i class="fa fa-lock"></i>Hi @User.Identity.Name Logout </a></li>
 								}
@@ -110,7 +105,6 @@
 								{
 									<li><a asp-controller="Account" asp-action="Login"><i class="fa fa-lock"></i>Login</a></li>
 								}
-
 							</ul>
 						</div>
 					</div>
@@ -136,7 +130,6 @@
 								<li><a asp-action="index" asp-controller="Home" class="active">Home</a></li>
 								<li class="dropdown">
 									<a href="#">Shop<i class="fa fa-angle-down"></i></a>
-
 								</li>
 								<li class="dropdown">
 									<a href="#">Blog<i class="fa fa-angle-down"></i></a>
@@ -149,12 +142,39 @@
 								<li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
 								<li><a asp-controller="Home" asp-action="MembersInfo">Our Members</a></li>
 							</ul>
+
+							@if (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee))
+							{
+								<ul class="nav navbar-nav collapse navbar-collapse">
+									<li class="dropdown">
+										<a href="#">Content Management<i class="fa fa-angle-down"></i></a>
+										<ul role="menu" class="sub-menu">
+											<li><a asp-area="Admin" asp-controller="PetCategory" asp-action="Index">Pet Category</a></li>
+											<li><a asp-area="Admin" asp-controller="Pet" asp-action="Index">Pet</a></li>
+											<li><a asp-area="Admin" asp-controller="ProductCategory" asp-action="Index">Product Category</a>
+											<li><a asp-area="Admin" asp-controller="Product" asp-action="Index">Product</a></li>
+										</ul>
+									</li>
+									@if (User.IsInRole(SD.Role_Admin))
+									{
+											<li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Admin</a></li>
+											<li class="dropdown">
+												<a href="#">Account Management<i class="fa fa-angle-down"></i></a>
+												<ul role="menu" class="sub-menu">
+													<li><a asp-area="Admin" asp-controller="User" asp-action="Index">Manage User</a></li>
+													<li><a asp-area="Admin" asp-controller="Role" asp-action="Index">Manage Role</a></li>
+												</ul>
+											</li>
+									}
+								</ul>
+							}
+
 						</div>
 					</div>
 					<div class="col-sm-3">
-						<form asp-controller="Product" asp-action="Search" method="post">
+						<form asp-controller="Home" asp-action="Search" method="post">
 							<div class="search_box pull-right">
-								<input type="text" placeholder="Search" name="searchTerm" />
+								<input type="text" placeholder="Search" name="searchString" />
 								<button class="btn btn-warning" type="submit">Search</button>
 
 							</div>

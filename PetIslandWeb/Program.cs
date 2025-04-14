@@ -4,12 +4,12 @@ using PetIsland.DataAccess.DbInitializer;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using PetIsland.Models;
+using PetIslandWeb.Hubs;
 using PetIsland.Models.Momo;
 using PetIslandWeb.Services.Momo;
 using PetIslandWeb.Services.Vnpay;
+using Microsoft.AspNetCore.Authentication.Google;
 
 namespace PetIslandWeb
 {
@@ -46,33 +46,38 @@ namespace PetIslandWeb
 
             builder.Services.AddIdentity<AppUserModel, IdentityRole>(options =>
             {
-                //options.SignIn.RequireConfirmedAccount = true;
+                // SignIn settings.
                 options.SignIn.RequireConfirmedEmail = false;
                 options.SignIn.RequireConfirmedPhoneNumber = false;
+                // Password settings.
                 options.Password.RequireDigit = true;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireLowercase = true;
                 options.Password.RequiredLength = 8;
+                // User settings.
                 options.User.RequireUniqueEmail = true;
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                // Lockout settings.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
             }).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
-            builder.Services.AddAuthentication(options =>
+            builder.Services.ConfigureApplicationCookie(options =>
             {
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            }).AddCookie(options =>
-            {
-                options.LoginPath = "/Account/Login"; //Redirect to Login page if not authenticated
-                options.LogoutPath = "/Account/Logout"; //Redirect to Login page if not authenticated
-                options.AccessDeniedPath = "/Account/AccessDenied"; //optional
+                // Redirects settings.
+                options.LoginPath = "/Account/Login"; 
+                // Cookie settings.
                 options.Cookie.HttpOnly = true;
                 options.SlidingExpiration = true;
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; //Use Always for HTTPS
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; //Use Always for HTTPS | None for dev mode
                 options.Cookie.SameSite = SameSiteMode.None; //Prevent Cross-Site Request Forgery (CSRF)
-            }).AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            });
+
+            builder.Services.AddAuthentication()
+            .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
             {
                 options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value!;
                 options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value!;
@@ -80,25 +85,21 @@ namespace PetIslandWeb
 
             builder.Services.AddRazorPages();
 
-            builder.Services.Configure<IdentityOptions>(options =>
+            builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+
+            builder.Services.AddCors(options =>
             {
-                // Password settings.
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = true;
-                options.Password.RequiredLength = 8;
-
-                // User settings.
-                options.User.RequireUniqueEmail = false;
-
-                // Lockout settings.
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.AllowedForNewUsers = true;
+                options.AddDefaultPolicy(
+                    builder =>
+                    {
+                        builder.WithOrigins("http://localhost:5140")
+                            .AllowAnyHeader()
+                            .WithMethods("GET", "POST")
+                            .AllowCredentials();
+                    });
             });
 
-            builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+            builder.Services.AddSignalR();
 
             //Connect VNPay API
             //builder.Services.AddScoped<IVnPayService, VnPayService>();
@@ -106,32 +107,30 @@ namespace PetIslandWeb
             builder.Services.AddHttpsRedirection(options =>
             {
                 options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-                options.HttpsPort = 443;
+                options.HttpsPort = 7021;
             });
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
-            app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
-
             app.UseSession();
-
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseWebSockets();
-            app.UseHttpsRedirection();
+            app.UseCors("CorsPolicy");
+
+            app.UseStatusCodePagesWithReExecute("/Home/Error/", "?statuscode={0}");
+
 
             SeedDatabase();
             app.MapControllerRoute(
@@ -143,7 +142,7 @@ namespace PetIslandWeb
             //pattern: "{areas:exists}/{controller=Product}/{action=Index}/{id?}");
 
             app.MapRazorPages();
-
+            app.MapHub<ChatHub>("/Realtime/Index");
             await app.RunAsync();
 
             void SeedDatabase()

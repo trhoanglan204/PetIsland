@@ -61,6 +61,7 @@ public class DbInitializer : IDbInitializer
                 PostalCode = "90001",
                 City = "HCM",
                 Role = SD.Role_Admin,
+                Avatar = "Admin.jpg"
             }, "Admin@123*").GetAwaiter().GetResult();
 
             AppUserModel user = _context.ApplicationUsers.FirstOrDefault(u => u.Email == "admin@kma.com")!;

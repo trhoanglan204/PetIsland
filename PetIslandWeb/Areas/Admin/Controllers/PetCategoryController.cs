@@ -11,7 +11,7 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Route("Admin/PetCategory")]
-//[Authorize(Roles = SD.Role_Admin)]
+[Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Employee}")]
 public class PetCatergoryController : Controller
 {
     private readonly ApplicationDbContext _context;

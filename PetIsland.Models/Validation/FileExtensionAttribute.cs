@@ -19,6 +19,6 @@ public class FileExtensionAttribute : ValidationAttribute
             }
 
         }
-        return ValidationResult.Success;
+        return ValidationResult.Success!;
     }
 }

@@ -1,5 +1,4 @@
 ﻿using PetIsland.Models;
-using PetIsland.Models.ViewModels;
 using PetIsland.Utility;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc;
@@ -13,9 +12,8 @@ using Microsoft.AspNetCore.Hosting;
 namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
-//[Authorize(Roles = SD.Role_Admin)]
-//[Authorize(Roles = SD.Role_Employee)]
 [Route("Admin/Product")]
+[Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Employee}")]
 public class ProductController : Controller
 {
     private readonly ApplicationDbContext _context;

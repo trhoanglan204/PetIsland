@@ -110,7 +110,7 @@ public class HomeController : Controller
         {
             return NotFound();
         }
-        var searchResult = new SearchViewModel
+        var searchResult = new SearchVM
         {
             Products = products,
             Pets = pets!,
@@ -155,11 +155,19 @@ public class HomeController : Controller
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error(int statuscode)
+    public IActionResult Error(int? statuscode = null)
     {
-        if (statuscode == 404)
+        if (statuscode == StatusCodes.Status404NotFound)
         {
-            return View("/Views/Shared/NotFoundPage");
+            return View("~/Views/Shared/NotFoundPage.cshtml");
+        }
+        else if (statuscode == StatusCodes.Status403Forbidden)
+        {
+            return View("~/Views/Account/AccessDenied.cshtml");
+        }
+        else if (statuscode == StatusCodes.Status500InternalServerError)
+        {
+            return View("~/Views/Shared/InternalServerError.cshtml");
         }
         else
         {

@@ -14,7 +14,7 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Route("Admin/User")]
-//[Authorize(Roles = SD.Role_Admin)]
+[Authorize(Roles = SD.Role_Admin)]
 public class UserController : Controller
 {
     private readonly UserManager<AppUserModel> _userManager;

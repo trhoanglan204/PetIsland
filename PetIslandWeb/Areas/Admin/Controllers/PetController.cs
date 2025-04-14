@@ -12,9 +12,8 @@ using Microsoft.EntityFrameworkCore;
 namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
-//[Authorize(Roles = SD.Role_Admin)]
-//[Authorize(Roles = SD.Role_Employee)]
 [Route("Admin/Pet")]
+[Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Employee}")]
 public class PetController : Controller
 {
     private readonly ApplicationDbContext _context;

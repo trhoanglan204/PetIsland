@@ -13,4 +13,5 @@ public class AppUserModel: IdentityUser
     public string? PostalCode { get; set; }
     public string? Token { get; set; }
     public string Role { get; set; } = string.Empty;
+    public string? Avatar { get; set; }
 }

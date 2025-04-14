@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
+using PetIsland.Utility;
 
 #pragma warning disable IDE0290
 
@@ -10,7 +11,7 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Route("Admin/Shipping")]
-[Authorize(Roles = "Publisher,Author,Admin")]
+[Authorize(Roles = $"{SD.Role_Employee},{SD.Role_Admin}")]
 public class ShippingController : Controller
 {
     private readonly ApplicationDbContext _context;

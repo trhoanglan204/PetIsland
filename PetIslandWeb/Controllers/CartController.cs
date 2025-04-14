@@ -36,7 +36,7 @@ public class CartController : Controller
         //Nhận Coupon code từ cookie
         var coupon_code = Request.Cookies["CouponTitle"];
 
-        CartItemViewModel cartVM = new()
+        CartItemVM cartVM = new()
         {
             CartItems = cartItems,
             GrandTotal = cartItems.Sum(x => x.Quantity * x.Price),
