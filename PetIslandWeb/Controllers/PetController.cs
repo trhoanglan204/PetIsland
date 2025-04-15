@@ -23,13 +23,13 @@ namespace PetIslandWeb.Controllers
 		}
 		public async Task<IActionResult> Search(string searchTerm)
 		{
-			var products = await _dataContext.Products
+			var pets = await _dataContext.Pets
 			.Where(p => p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm))
 			.ToListAsync();
 
 			ViewBag.Keyword = searchTerm;
 
-			return View(products);
+			return View(pets);
 		}
 
 		public async Task<IActionResult> Detail(long? Id)
@@ -38,12 +38,12 @@ namespace PetIslandWeb.Controllers
 
 			var petsById = _dataContext.Pets.Where(p => p.Id == Id).FirstOrDefault()!; 
 
-			var relatedProducts = await _dataContext.Products
-			.Where(p => p.ProductCategoryId == petsById.PetCategoryId && p.Id != petsById.Id)
+			var relatedPets = await _dataContext.Pets
+            .Where(p => p.PetCategoryId == petsById.PetCategoryId && p.Id != petsById.Id)
 			.Take(4)
 			.ToListAsync();
 
-			ViewBag.RelatedProducts = relatedProducts;
+			ViewBag.RelatedPets = relatedPets;
 
 			var viewModel = new PetVM
 			{
@@ -51,48 +51,6 @@ namespace PetIslandWeb.Controllers
 			};
 
 			return View(viewModel);
-		}
-
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-
-		public async Task<IActionResult> CommentProduct(RatingModel rating)
-		{
-			if (ModelState.IsValid)
-			{
-
-				var ratingEntity = new RatingModel
-				{
-					ProductId = rating.ProductId,
-					Name = rating.Name,
-					Email = rating.Email,
-					Comment = rating.Comment,
-					Star = rating.Star
-
-				};
-
-				_dataContext.Ratings.Add(ratingEntity);
-				await _dataContext.SaveChangesAsync();
-
-				TempData["success"] = "Thêm đánh giá thành công";
-
-				return Redirect(Request.Headers.Referer);
-			}
-			else
-			{
-				TempData["error"] = "Model có một vài thứ đang lỗi";
-				var errors = new List<string>();
-				foreach (var value in ModelState.Values)
-				{
-					foreach (var error in value.Errors)
-					{
-						errors.Add(error.ErrorMessage);
-					}
-				}
-				string errorMessage = string.Join("\n", errors);
-
-				return RedirectToAction("Detail", new { id = rating.ProductId });
-			}
 		}
 	}
 }

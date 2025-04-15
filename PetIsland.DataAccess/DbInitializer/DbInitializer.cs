@@ -36,38 +36,78 @@ public class DbInitializer : IDbInitializer
             {
                 _context.Database.Migrate();
             }
+
+            SeedRolesAndUsers();
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while migrating the database.");
         }
 
-        //create roles if they are not created
-        if (!_roleManager.RoleExistsAsync(SD.Role_Customer).GetAwaiter().GetResult())
+    }
+    private void CreateUserWithRole(AppUserModel user, string password, string role)
+    {
+        var result = _userManager.CreateAsync(user, password).GetAwaiter().GetResult();
+        if (result.Succeeded)
         {
-            _roleManager.CreateAsync(new IdentityRole(SD.Role_Customer)).GetAwaiter().GetResult();
-            _roleManager.CreateAsync(new IdentityRole(SD.Role_Employee)).GetAwaiter().GetResult();
-            _roleManager.CreateAsync(new IdentityRole(SD.Role_Admin)).GetAwaiter().GetResult();
-            
-            //if roles are not created, then we will create admin user as well
-            _userManager.CreateAsync(new AppUserModel
-            {
-                UserName = "admin@kma.com",
-                Email = "admin@kma.com",
-                Name = "AT19_MaThieuFamily",
-                PhoneNumber = "0123456789",
-                StreetAddress = "17A Cong Hoa",
-                State = "DK",
-                PostalCode = "90001",
-                City = "HCM",
-                Role = SD.Role_Admin,
-                Avatar = "Admin.jpg"
-            }, "Admin@123*").GetAwaiter().GetResult();
-
-            AppUserModel user = _context.ApplicationUsers.FirstOrDefault(u => u.Email == "admin@kma.com")!;
-            _userManager.AddToRoleAsync(user, SD.Role_Admin).GetAwaiter().GetResult();
+            _userManager.AddToRoleAsync(user, role).GetAwaiter().GetResult();
+            _logger.LogInformation("Created user {Email} with role {Role}", user.Email, role);
         }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                _logger.LogError("Failed to create user {Email}: {Error}", user.Email, error.Description);
+            }
+        }
+    }
+    private void SeedRolesAndUsers() 
+    {
+        if (_roleManager.RoleExistsAsync(SD.Role_Customer).GetAwaiter().GetResult()) return;
 
-        return;
+        foreach (var role in new[] { SD.Role_Customer, SD.Role_Employee, SD.Role_Admin })
+        {
+            _roleManager.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
+        }
+        CreateUserWithRole(new AppUserModel
+        {
+            UserName = "admin@kma.com",
+            Email = "admin@kma.com",
+            Name = "AT19_MaThieuFamily",
+            PhoneNumber = "0123456789",
+            StreetAddress = "17A Cong Hoa",
+            State = "DK",
+            PostalCode = "90001",
+            City = "HCM",
+            Role = SD.Role_Admin,
+            Avatar = "Admin.jpg"
+        }, "Admin@123*", SD.Role_Admin);
+
+        CreateUserWithRole(new AppUserModel
+        {
+            UserName = "vip_customer",
+            Email = "customer@kma.com",
+            Name = "AT19_Gang",
+            PhoneNumber = "001122334455",
+            StreetAddress = "Đầu đường xó chợ",
+            State = "DK",
+            PostalCode = "90001",
+            City = "HaNoi",
+            Role = SD.Role_Customer
+        }, "Customer@123*", SD.Role_Customer);
+
+        CreateUserWithRole(new AppUserModel
+        {
+            UserName = "staffA",
+            Email = "staff@kma.com",
+            Name = "AT19_Slave",
+            PhoneNumber = "0987654321",
+            StreetAddress = "Ut Tich",
+            State = "DK",
+            PostalCode = "90001",
+            City = "HCM",
+            Role = SD.Role_Employee,
+            Avatar = "staffA.jpg"
+        }, "Staff@123*", SD.Role_Employee);
     }
 }

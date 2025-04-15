@@ -57,7 +57,6 @@ namespace PetIslandWeb
                 options.Password.RequiredLength = 8;
                 // User settings.
                 options.User.RequireUniqueEmail = true;
-                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
                 // Lockout settings.
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
                 options.Lockout.MaxFailedAccessAttempts = 5;
@@ -85,8 +84,6 @@ namespace PetIslandWeb
 
             builder.Services.AddRazorPages();
 
-            builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(
@@ -104,11 +101,11 @@ namespace PetIslandWeb
             //Connect VNPay API
             //builder.Services.AddScoped<IVnPayService, VnPayService>();
 
-            builder.Services.AddHttpsRedirection(options =>
-            {
-                options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-                options.HttpsPort = 7021;
-            });
+            //builder.Services.AddHttpsRedirection(options =>
+            //{
+            //    options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+            //    options.HttpsPort = 7021;
+            //});
 
             var app = builder.Build();
 
