@@ -33,7 +33,6 @@
   </ItemGroup>
 
     <ItemGroup>
-	    <Folder Include="Views\Pet\" />
 	    <Folder Include="wwwroot\images\members\" />
 	    <Folder Include="wwwroot\images\pets\" />
     </ItemGroup>	
