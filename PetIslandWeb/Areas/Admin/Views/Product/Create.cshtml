@@ -8,8 +8,6 @@
 
     <div class="col-md-9">
         <form autocomplete="off" asp-action="Create" enctype="multipart/form-data">
-            
-
           <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="form-group">
                     <label>Name</label>
@@ -35,7 +33,7 @@
                 <div class="form-group">
                     <label>Category</label>
                     <select asp-for="ProductCategoryId" class="form-control" asp-items="ViewBag.Categories">
-                         <option>--Choose a category</option>
+                         <option value="">--Choose a category--</option>
                     </select>
                     <span asp-validation-for="ProductCategoryId" class="text-danger"></span>
                 </div>
@@ -48,7 +46,7 @@
                 </div>
                 <div class="form-group">
                     <label>Quantity</label>
-                    <input asp-for="Quantity" class="form-control" />
+                    <input asp-for="Quantity" type="number" min="0" class="form-control" />
                     <span asp-validation-for="Quantity" class="text-danger"></span>
                 </div>
 
@@ -77,24 +75,27 @@
             readURL(this);
         });
     </script>
+    <script>
+        CKEDITOR.replace('Description');
+    </script>
+    <script>
+        $(".typing-price").on("keyup", function () {
 
-        <script>
-            CKEDITOR.replace('Description');
-        </script>
+            var currency_input = $(this).val(); //29980000
 
-        <script>
-            $(".typing-price").on("keyup", function () {
+            $("#price-convert").html(
 
-                var currency_input = $(this).val(); //29980000
+                new Intl.NumberFormat('vn-VN', { style: 'currency', currency: 'VND' }).format(
+                currency_input,
 
-                $("#price-convert").html(
-
-                    new Intl.NumberFormat('vn-VN', { style: 'currency', currency: 'VND' }).format(
-                    currency_input,
-
-                    )
-                );
-            });
-        </script>
+                )
+            );
+        });
+    </script>
+    <script>
+        document.querySelector('input[name="Quantity"]').addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
     }
 

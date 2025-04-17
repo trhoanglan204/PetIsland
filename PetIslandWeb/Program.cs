@@ -20,8 +20,8 @@ namespace PetIslandWeb
             var builder = WebApplication.CreateBuilder(args);
 
             //Connect MomoAPI
-            //builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
-            //builder.Services.AddScoped<IMomoService, MomoService>();
+            builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
+            builder.Services.AddScoped<IMomoService, MomoService>();
 
             var connectionPetIslandDbString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnectionPetIslandDB' not found.");
 
@@ -99,7 +99,7 @@ namespace PetIslandWeb
             builder.Services.AddSignalR();
 
             //Connect VNPay API
-            //builder.Services.AddScoped<IVnPayService, VnPayService>();
+            builder.Services.AddScoped<IVnPayService, VnPayService>();
 
             //builder.Services.AddHttpsRedirection(options =>
             //{

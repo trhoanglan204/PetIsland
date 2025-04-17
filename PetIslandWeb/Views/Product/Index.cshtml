@@ -12,6 +12,7 @@
     <table class="table">
         <thead>
             <tr>
+                <th>Image</th>
                 <th>Tên</th>
                 <th>Giá</th>
                 <th>Mô tả</th>
@@ -22,9 +23,17 @@
             @foreach (var product in Model)
             {
                 <tr>
+                    @if (@product.Image == "null.jpg")
+                    {
+                        <td> <img src="~/images/null.jpg" width="120px" /> </td>
+                    }
+                    else
+                    {
+                        <td> <img src="~/images/products/@product.Image" width="120px" height="150px" /> </td>
+                    }
                     <td>@product.Name</td>
                     <td>@product.Price</td>
-                    <td>@product.Description</td>
+                    <td>@Html.Raw(@product.Description)</td>
                     <td>
                         <a asp-action="Details" asp-route-id="@product.Id">Chi tiết</a>
                     </td>

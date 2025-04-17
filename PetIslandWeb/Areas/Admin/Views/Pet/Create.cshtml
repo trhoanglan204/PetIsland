@@ -1,13 +1,8 @@
 ﻿@model PetModel
-@{
-    ViewData["title"] = "Create Pet";
-}
     <h3>Create Pet</h3>
 
     <div class="col-md-9">
         <form autocomplete="off" asp-action="Create" enctype="multipart/form-data">
-            
-
           <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="form-group">
                     <label>Name</label>
@@ -20,20 +15,36 @@
                 <textarea asp-for="Description" class="form-control"> </textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
-
+                <div class="form-group">
+                    <label>Age</label>
+                    <input asp-for="Age" type="date" class="form-control" />
+                    <span asp-validation-for="Age" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label>Giới tính</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Sex" value="Boy" id="boyOption" />
+                        <label class="form-check-label" for="boyOption">Đực (Boy)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Sex" value="Girl" id="girlOption" />
+                        <label class="form-check-label" for="girlOption">Cái (Girl)</label>
+                    </div>
+                    <span asp-validation-for="Sex" class="text-danger"></span>
+                </div>
                 <div class="form-group">
                     <label>Category</label>
                     <select asp-for="PetCategoryId" class="form-control" asp-items="ViewBag.Categories">
-                         <option>--Choose a category</option>
+                         <option value="">--Choose a category--</option>
                     </select>
-            <span asp-validation-for="PetCategoryId" class="text-danger"></span>
+                    <span asp-validation-for="PetCategoryId" class="text-danger"></span>
                 </div>
-            <div class="form-group">
-                <label>Image</label>
-                <input asp-for="ImageUpload" class="form-control" />
-                <span asp-validation-for="ImageUpload" class="text-danger"></span>
-                <img id="imgpreview" class="pt-2" />
-            </div>
+                <div class="form-group">
+                    <label>Image</label>
+                    <input asp-for="ImageUpload" class="form-control" />
+                    <span asp-validation-for="ImageUpload" class="text-danger"></span>
+                    <img id="imgpreview" class="pt-2" />
+                </div>
 
             <div class="form-group">
                 <button class="btn btn-primary">Create</button>
@@ -50,6 +61,17 @@
     <script>
         $("#ImageUpload").change(function () {
             readURL(this);
+        });
+    </script>
+    <script>
+        $("form").submit(function (e) {
+            let selectedSex = $("input[name='Sex']:checked").val();
+            if (!selectedSex) {
+                e.preventDefault(); // chặn submit
+                $(".sex-error").text("Bạn phải chọn giới tính.");
+            } else {
+                $(".sex-error").text(""); // xoá lỗi nếu đã chọn
+            }
         });
     </script>
     }

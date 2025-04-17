@@ -11,14 +11,14 @@ public class PetModel
     public int Id { get; set; }
     [Required, MaxLength(100)]
     public required string Name { get; set; }
-    [Required]
-    public required Sexual Sex { get; set; } //0 Boy : 1 Girl  
+    [Required(ErrorMessage = "Vui lòng chọn giới tính cho thú cưng")]
+    public Sexual? Sex { get; set; } //0 Boy : 1 Girl  
     public string Slug { get; set; } = string.Empty;
     public string Image { get; set; } = "null.jpg";
     public int PetCategoryId { get; set; }
     [ForeignKey("PetCategoryId")]
     [ValidateNever]
-    public PetCategoryModel PetCategory { get; set; }
+    public PetCategoryModel? PetCategory { get; set; }
 
     public DateTime Age { get; set; }
     public string Description { get; set; } = string.Empty;

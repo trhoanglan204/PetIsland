@@ -11,6 +11,6 @@ public class PetCategoryModel
     [MaxLength(30)]
     [DisplayName("Category Name")]
     public string Name { get; set; } = string.Empty;
-    public string Slug { get; set; }
+    public string? Slug { get; set; }
 
 }

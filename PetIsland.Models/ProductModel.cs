@@ -23,7 +23,7 @@ public partial class ProductModel
     public int ProductCategoryId { get; set; }
     [ForeignKey("ProductCategoryId")]
     [ValidateNever]
-    public ProductCategoryModel ProductCategory { get; set; }
+    public ProductCategoryModel? ProductCategory { get; set; }
 
     [Required(ErrorMessage = "Product's price should be filled in")]
     [Range(1, double.MaxValue, ErrorMessage = "Price should be greater than $0.01")]

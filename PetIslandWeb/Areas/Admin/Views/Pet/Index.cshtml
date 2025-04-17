@@ -36,9 +36,17 @@
                     <td>@item.Name</td>
                     <td>@Html.Raw(@item.Description)</td>
                     <td>@item.SexDisplay</td>
+                    @if (@item.Image == "null.jpg")
+                    {
+                        <td> <img src="~/images/null.jpg" width="120px" /> </td>
+                    }
+                    else
+                    {
+                        <td> <img src="~/images/pets/@item.Image" width="120px" height="150px" /> </td>
+                    }
                     <td> <img src="~/images/pets/@item.Image" width="120px" height="150px" /> </td>
                     <td> @item.Slug </td>
-                    <td> @item.PetCategory.Name </td>
+                    <td> @item.PetCategory?.Name </td>
                     <td> @item.AgeDisplay </td>
                     <td>
                         <a class="btn btn-warning btn-sm" asp-action="Edit" asp-controller="Pet" asp-route-Id="@item.Id">Edit</a>

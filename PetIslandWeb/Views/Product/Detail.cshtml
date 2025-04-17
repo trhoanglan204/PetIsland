@@ -14,7 +14,14 @@
 			<!--product-details-->
 			<div class="col-sm-5">
 				<div class="view-product">
-					<img src="~/media/products/@Model.Product.Image" alt="" width="100px" height="200px" />
+					@if (@Model.Product.Image == "null.jpg")
+                    {
+						<img src="~/images/null.jpg" alt="" width="100px" height="200px" />
+                    }
+                    else
+                    {
+                        <img src="~/images/products/@Model.Product.Image" alt="" width="100px" height="200px" />
+                    }
 					<h3>ZOOM</h3>
 				</div>
 				<div id="similar-product" class="carousel slide" data-ride="carousel">
@@ -53,8 +60,8 @@
 					</span>
 					<p><b>Availability:</b> In Stock</p>
 					<p><b>Condition:</b> New</p>
-					<p><b>Brand:</b> @Model.Product.Brand.Name</p>
-					<p><b>Category:</b> @Model.Product.ProductCategory.Name</p>
+					<p><b>Brand:</b> @Model.Product.Brand?.Name</p>
+					<p><b>Category:</b> @Model.Product.ProductCategory?.Name</p>
 					<a href=""><img src="images/product-details/share.png" class="share img-responsive" alt="" /></a>
 				</div><!--/product-information-->
 			</div>
@@ -202,8 +209,8 @@
 												<img src="~/images/products/@relatedProduct.Image" alt="@relatedProduct.Name" width="100px" height="200px" />
 												<h2>@relatedProduct.Price.ToString("#,##0 VNĐ")</h2>
 												<p>@relatedProduct.Name</p>
-												<p>Danh mục: @relatedProduct.ProductCategory.Name</p>
-												<p>Thương hiệu: @relatedProduct.Brand.Name</p>
+												<p>Danh mục: @relatedProduct.ProductCategory?.Name</p>
+												<p>Thương hiệu: @relatedProduct.Brand?.Name</p>
 											</a>
 											
 										</div>
