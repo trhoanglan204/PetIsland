@@ -1,8 +1,39 @@
-﻿
+﻿@model List<ProductModel>
+
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Danh sách sản phẩm";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Index product</h1>
+<h1>Danh sách sản phẩm</h1>
 
+@if (Model != null && Model.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Giá</th>
+                <th>Mô tả</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+            {
+                <tr>
+                    <td>@product.Name</td>
+                    <td>@product.Price</td>
+                    <td>@product.Description</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@product.Id">Chi tiết</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Không có sản phẩm nào.</p>
+}

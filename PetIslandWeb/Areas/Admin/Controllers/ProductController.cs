@@ -101,7 +101,6 @@ public class ProductController : Controller
                 fs.Close();
                 product.Image = imageName;
             }
-
             _context.Add(product);
             await _context.SaveChangesAsync();
             TempData["success"] = "Thêm sản phẩm thành công";

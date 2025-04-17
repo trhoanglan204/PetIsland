@@ -17,9 +17,10 @@ namespace PetIslandWeb.Controllers
 		{
 			_dataContext = context;
 		}
-		public IActionResult Index()
+		public async Task<IActionResult> Index()
 		{
-			return View();
+			var products = await _dataContext.Products.ToListAsync();
+			return View(products);
 		}
 		public async Task<IActionResult> Search(string searchTerm)
 		{
@@ -92,7 +93,7 @@ namespace PetIslandWeb.Controllers
 						errors.Add(error.ErrorMessage);
 					}
 				}
-				string errorMessage = string.Join("\n", errors);
+				//string errorMessage = string.Join("\n", errors);
 
 				return RedirectToAction("Detail", new { id = rating.ProductId });
 			}

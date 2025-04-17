@@ -39,6 +39,19 @@
                     </select>
                     <span asp-validation-for="ProductCategoryId" class="text-danger"></span>
                 </div>
+                <div class="form-group">
+                    <label>Brand</label>
+                    <select asp-for="BrandId" class="form-control" asp-items="ViewBag.Brands">
+                        <option value="">--No brand selected--</option>  <!-- value rỗng để nullable -->
+                    </select>
+                    <span asp-validation-for="BrandId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input asp-for="Quantity" class="form-control" />
+                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                </div>
+
             <div class="form-group">
                 <label>Image</label>
                 <input asp-for="ImageUpload" class="form-control" />

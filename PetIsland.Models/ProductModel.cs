@@ -12,13 +12,14 @@ public partial class ProductModel
     [Required(ErrorMessage = "Product's name should be filled in")]
     public required string Name { get; set; }
     public string Description { get; set; } = string.Empty;
-    public int SoldOut { get; set; }
-    public int Quantity { get; set; }
+    public int SoldOut { get; set; } = 0;
+    [Range(1, 99999)]
+    public int Quantity { get; set; } = 0;
     public string Slug { get; set; } = string.Empty;
     public string Image { get; set; } = "null.jpg";
-    public RatingModel Ratings { get; set; }
-    public int BrandId { get; set; }
-    public BrandModel Brand { get; set; }
+    public RatingModel? Ratings { get; set; }
+    public int? BrandId { get; set; }
+    public BrandModel? Brand { get; set; }
     public int ProductCategoryId { get; set; }
     [ForeignKey("ProductCategoryId")]
     [ValidateNever]
@@ -26,7 +27,7 @@ public partial class ProductModel
 
     [Required(ErrorMessage = "Product's price should be filled in")]
     [Range(1, double.MaxValue, ErrorMessage = "Price should be greater than $0.01")]
-    public decimal Price { get; set; }
+    public decimal Price { get; set; } = 0;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
     [NotMapped]
