@@ -17,11 +17,14 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 public class SliderController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly IWebHostEnvironment _webHostEnviroment;
-    public SliderController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+    private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly ILogger<SliderController> _logger;
+
+    public SliderController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment,ILogger<SliderController> logger)
     {
         _context = context;
-        _webHostEnviroment = webHostEnvironment;
+        _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
     [Route("Index")]
     public async Task<IActionResult> Index()
@@ -45,8 +48,23 @@ public class SliderController : Controller
 
             if (slider.ImageUpload != null)
             {
-                string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "images/sliders");
-                string imageName = Guid.NewGuid().ToString() + "_" + slider.ImageUpload.FileName;
+                if (slider.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(slider);
+                }
+                string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/sliders");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(slider.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "default";
+                }
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(slider.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
                 var fs = new FileStream(filePath, FileMode.Create);
@@ -103,19 +121,45 @@ public class SliderController : Controller
         {
             if (slider.ImageUpload != null)
             {
-                string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "images/sliders");
-                string imageName = Guid.NewGuid().ToString() + "_" + slider.ImageUpload.FileName;
+                if (slider.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(slider);
+                }
+                string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/sliders");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(slider.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "default";
+                }
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(slider.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
                 var fs = new FileStream(filePath, FileMode.Create);
                 await slider.ImageUpload.CopyToAsync(fs);
                 fs.Close();
+                var oldImage = Path.Combine(uploadsDir, slider.Image);
+                if (System.IO.File.Exists(oldImage))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldImage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldImage, ex.Message);
+                    }
+                }
                 slider_existed.Image = imageName;
             }
             slider_existed.Name = slider.Name;
             slider_existed.Description = slider.Description;
             slider_existed.Status = slider.Status;
-
 
             _context.Update(slider_existed);
             await _context.SaveChangesAsync();
@@ -147,16 +191,19 @@ public class SliderController : Controller
         {
             return NotFound();
         }
-        if (!string.Equals(slider.Image, "null.jpg"))
+        string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/sliders");
+        string oldfilePath = Path.Combine(uploadsDir, slider.Image!);
+        if (System.IO.File.Exists(oldfilePath))
         {
-            string uploadsDir = Path.Combine(_webHostEnviroment.WebRootPath, "images/sliders");
-            string oldfilePath = Path.Combine(uploadsDir, slider.Image!);
-            if (System.IO.File.Exists(oldfilePath))
+            try
             {
                 System.IO.File.Delete(oldfilePath);
             }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldfilePath, ex.Message);
+            }
         }
-
         _context.Sliders.Remove(slider);
         await _context.SaveChangesAsync();
         TempData["success"] = "Slider đã được xóa thành công";

@@ -30,4 +30,6 @@ public class ApplicationDbContext : IdentityDbContext<AppUserModel>
     public DbSet<WishlistModel> Wishlist { get; set; }
     public DbSet<BrandModel> Brands { get; set; }
     public DbSet<RatingModel> Ratings { get; set; }
+    public DbSet<RatingEntryModel> RatingEntries { get; set; }
+    public DbSet<StatisticalModel> Statisticals { get; set; }
 }

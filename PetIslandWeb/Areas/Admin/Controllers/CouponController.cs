@@ -31,11 +31,9 @@ public class CouponController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CouponModel coupon)
     {
-
-
         if (ModelState.IsValid)
         {
-
+            coupon.Name = coupon.Name.Replace(" ", "");//coupon không có khoảng trắng
             _context.Add(coupon);
             await _context.SaveChangesAsync();
             TempData["success"] = "Thêm coupon thành công";

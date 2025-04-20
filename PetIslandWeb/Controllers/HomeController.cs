@@ -1,14 +1,10 @@
+using System.Diagnostics;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
-using PetIsland.Utility;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 #pragma warning disable IDE0290
 
@@ -16,7 +12,6 @@ namespace PetIslandWeb.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    //private readonly IUnitOfWork _unitOfWork;
     private readonly ApplicationDbContext _context;
     private static List<GroupMemberModel>? ListMembers;
     private readonly UserManager<AppUserModel> _userManager;
@@ -32,8 +27,8 @@ public class HomeController : Controller
     {
         var viewModel = new HomeViewModel
         {
-            Products = await _context.Products.Include("ProductCategory").Include("Brand").ToListAsync(),
-            Pets = await _context.Pets.Include("PetCategory").ToListAsync()
+            Products = await _context.Products.Include(p => p.ProductCategory).Include(p => p.Brand).ToListAsync(),
+            Pets = await _context.Pets.Include(p => p.PetCategory).ToListAsync()
         };
         var slider = await _context.Sliders.Where(s => s.Status == 1).ToListAsync();
         ViewBag.Slider = slider;
@@ -41,8 +36,14 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddWishlist(int Id, WishlistModel wishlistmodel)
+    public async Task<IActionResult> AddWishlist(int Id)
     {
+        WishlistModel? wishlist = await _context.Wishlist.FindAsync(Id);
+        if (wishlist != null)
+        {
+            //ignore
+            return Ok(new { success = true, message = "Add to wishlisht Successfully" });
+        }
         var user = await _userManager.GetUserAsync(User);
 
         var wishlistProduct = new WishlistModel

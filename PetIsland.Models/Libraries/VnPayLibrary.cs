@@ -121,7 +121,7 @@ namespace PetIsland.Models.Libraries
 			var myChecksum = HmacSha512(secretKey, rspRaw);
 			return myChecksum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);
 		}
-		private string HmacSha512(string key, string inputData)
+		private static string HmacSha512(string key, string inputData)
 		{
 			var hash = new StringBuilder();
 			var keyBytes = Encoding.UTF8.GetBytes(key);

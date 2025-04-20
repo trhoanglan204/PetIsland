@@ -1,6 +1,51 @@
-﻿<address>
-    Phan hieu Hoc vien Ki thuat Mat ma<br />
-    17A Cong Hoa Quan Tan Binh, Thanh pho Ho Chi Minh<br />
-    <abbr title="Phone">P:</abbr>
-    028 123456789
-</address>
+﻿@{
+    ViewData["Title"] = "Liên hệ";
+}
+
+<!-- CSS cho Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- CSS cho MiniMap -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.css" />
+
+<div class="container mt-4">
+    <h2>Thông tin liên hệ</h2>
+
+    <address>
+        Phân hiệu Học viện Kỹ thuật Mật mã<br />
+        17A Cộng Hòa, Quận Tân Bình, TP. Hồ Chí Minh<br />
+        <abbr title="Phone">P:</abbr> 028 123456789
+    </address>
+
+    <!-- Bản đồ chính -->
+    <div id="contact-map" style="height: 400px; width: 100%; border-radius: 10px; border: 1px solid #ccc;"></div>
+</div>
+
+<!-- JS cho Leaflet -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- JS cho MiniMap -->
+<script src="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.js"></script>
+
+<script>
+    // Tạo bản đồ chính
+    var mainMap = L.map('contact-map').setView([10.8015, 106.6534], 16);
+
+    // Nguồn tile map
+    var mainLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(mainMap);
+
+    // Thêm marker vị trí liên hệ
+    L.marker([10.8015, 106.6534])
+        .addTo(mainMap)
+        .bindPopup('17A Cộng Hòa, Tân Bình, TP.HCM')
+        .openPopup();
+
+    // Tạo MiniMap
+    var miniMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+
+    new L.Control.MiniMap(miniMapLayer, {
+        toggleDisplay: true,
+        minimized: false,
+        position: 'bottomright'
+    }).addTo(mainMap);
+</script>

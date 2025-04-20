@@ -15,7 +15,7 @@ public class FileExtensionAttribute : ValidationAttribute
             bool result = extensions.Any(x => extension.EndsWith(x));
             if (!result)
             {
-                return new ValidationResult("Allowed extensions are jpg or png and jpeg");
+                return new ValidationResult(ErrorMessage = "Chỉ chấp nhận ảnh có đuôi jpg, jpeg, png");
             }
 
         }

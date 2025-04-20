@@ -1,18 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using PetIsland.Models;
 using PetIsland.Models.Vnpay;
 using PetIslandWeb.Services.Momo;
 using PetIslandWeb.Services.Vnpay;
-using System.Security.Cryptography;
 
 namespace PetIslandWeb.Controllers;
 
+#pragma warning disable IDE0290
 
 public class PaymentController : Controller
 {
 	private readonly IVnPayService _vnPayService;
-	private IMomoService _momoService;
+	private readonly IMomoService _momoService;
 	public PaymentController(IMomoService momoService, IVnPayService vnPayService)
 	{
 		_momoService = momoService;
@@ -39,7 +38,4 @@ public class PaymentController : Controller
 
 		return Redirect(url);
 	}
-
-
-
 }

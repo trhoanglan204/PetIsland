@@ -12,20 +12,32 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 [Area("Admin")]
 [Route("Admin/PetCategory")]
 [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Employee}")]
-public class PetCatergoryController : Controller
+public class PetCategoryController : Controller
 {
     private readonly ApplicationDbContext _context;
 
-    public PetCatergoryController(ApplicationDbContext context)
+    public PetCategoryController(ApplicationDbContext context)
     {
         _context = context;
     }
     [Route("Index")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pg = 1)
     {
         var objCatagoryList = await _context.PetCategory.ToListAsync();
+        const int pageSize = 10;
+        if (pg < 1)
+        {
+            pg = 1;
+        }
 
-        return View(objCatagoryList);
+        int resCount = objCatagoryList.Count;
+        var pager = new Paginate(resCount, pg, pageSize);
+        int recSkip = (pg - 1) * pageSize;
+
+        var data = objCatagoryList.Skip(recSkip).Take(pager.PageSize).ToList();
+        ViewBag.Pager = pager;
+
+        return View(data);
     }
 
     [Route("Create")]

@@ -84,12 +84,24 @@
 
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <script>
+        const maxSize = 5 * 1024 * 1024;
         $("#ImageUpload").change(function () {
+			const file = this.files[0];
+
+            if (file){
+				if (file.size > maxSize) {
+                    alert("File ảnh không được lớn hơn 5MB.");
+					$(this).val("");
+					return;
+				}
+            }
             readURL(this);
         });
     </script>
     <script>
-        CKEDITOR.replace('Description');
+        CKEDITOR.replace('Description', {
+            versionCheck: false
+        });
     </script>
     <script>
         $(".typing-price").on("keyup", function () {

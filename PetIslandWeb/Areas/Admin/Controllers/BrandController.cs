@@ -64,7 +64,7 @@ public class BrandController : Controller
     {
         if (ModelState.IsValid)
         {
-            brand.Slug = brand.Name.Replace(" ", "-");
+            brand.Slug = brand.Name!.Replace(" ", "-");
             var slug = await _dataContext.Brands.FirstOrDefaultAsync(p => p.Slug == brand.Slug);
             if (slug != null)
             {
@@ -113,12 +113,11 @@ public class BrandController : Controller
     {
         if (ModelState.IsValid)
         {
-            brand.Slug = brand.Name.Replace(" ", "-");
+            brand.Slug = brand.Name!.Replace(" ", "-");
             _dataContext.Update(brand);
             await _dataContext.SaveChangesAsync();
             TempData["success"] = "Cập nhật thương hiệu thành công";
             return RedirectToAction("Index");
-
         }
         else
         {

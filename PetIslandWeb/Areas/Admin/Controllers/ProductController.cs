@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using PetIsland.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
+using System.Text.RegularExpressions;
 
 #pragma warning disable IDE0290
 
@@ -18,10 +19,12 @@ public class ProductController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
-    public ProductController(IWebHostEnvironment webHostEnvironment, ApplicationDbContext context)
+    private readonly ILogger<ProductController> _logger;
+    public ProductController(IWebHostEnvironment webHostEnvironment, ApplicationDbContext context, ILogger<ProductController> logger)
     {
         _context = context;
         _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -45,9 +48,9 @@ public class ProductController : Controller
     [Route("UpdateMoreQuantity")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult UpdateMoreQuantity(ProductQuantityModel productQuantityModel)
+    public async Task<IActionResult> UpdateMoreQuantity(ProductQuantityModel productQuantityModel)
     {
-        var product = _context.Products.Find(productQuantityModel.ProductId);
+        var product = await _context.Products.FindAsync(productQuantityModel.ProductId);
 
         if (product == null)
         {
@@ -60,7 +63,7 @@ public class ProductController : Controller
         productQuantityModel.DateTime = DateTime.Now;
 
         _context.Add(productQuantityModel);
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
         TempData["success"] = "Thêm số lượng sản phẩm thành công";
         return RedirectToAction("CreateProductQuantity", "Product", new { Id = productQuantityModel.ProductId });
     }
@@ -92,20 +95,50 @@ public class ProductController : Controller
 
             if (product.ImageUpload != null)
             {
+                if (product.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(product);
+                }
                 string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/products");
-                string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpload.FileName;
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(product.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "default";
+                }
+                baseName = CommonHelpers.SanitizeFileName(baseName);
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(product.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
-                var fs = new FileStream(filePath, FileMode.Create);
+                using var fs = new FileStream(filePath, FileMode.Create);
                 await product.ImageUpload.CopyToAsync(fs);
                 fs.Close();
                 product.Image = imageName;
             }
-            _context.Add(product);
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+
+            if (product.Ratings != null)
+            {
+                product.Ratings = null; //reset, just for sure
+            }
+            var rating = new RatingModel
+            {
+                ProductId = product.Id,
+                Star = 0,
+                TotalRated = 0
+            };
+            product.Ratings = rating;
+
+            _context.Ratings.Add(rating);
             await _context.SaveChangesAsync();
             TempData["success"] = "Thêm sản phẩm thành công";
             return RedirectToAction("Index");
-
         }
         else
         {
@@ -151,13 +184,41 @@ public class ProductController : Controller
 
             if (product.ImageUpload != null)
             {
+                if (product.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(product);
+                }
                 string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/products");
-                string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpload.FileName;
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(product.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "product_" + product.Slug;
+                }
+                baseName = CommonHelpers.SanitizeFileName(baseName);
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(product.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
                 var fs = new FileStream(filePath, FileMode.Create);
                 await product.ImageUpload.CopyToAsync(fs);
                 fs.Close();
+                var oldImage = Path.Combine(uploadsDir, existed_product.Image);
+                if (System.IO.File.Exists(oldImage))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldImage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldImage, ex.Message);
+                    }
+                }
                 existed_product.Image = imageName;
             }
 
@@ -171,7 +232,6 @@ public class ProductController : Controller
             await _context.SaveChangesAsync();
             TempData["success"] = "Cập nhật sản phẩm thành công";
             return RedirectToAction("Index");
-
         }
         else
         {
@@ -198,13 +258,17 @@ public class ProductController : Controller
         {
             return NotFound();
         }
-        if (!string.Equals(product.Image, "null.jpg"))
+        string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/products");
+        string oldfilePath = Path.Combine(uploadsDir, product.Image);
+        if (System.IO.File.Exists(oldfilePath))
         {
-            string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/products");
-            string oldfilePath = Path.Combine(uploadsDir, product.Image);
-            if (System.IO.File.Exists(oldfilePath))
+            try
             {
                 System.IO.File.Delete(oldfilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldfilePath, ex.Message);
             }
         }
         _context.Products.Remove(product);

@@ -5,7 +5,7 @@ namespace PetIsland.Models.ViewModels;
 
 public class PetVM
 {
-    public PetModel Pet { get; set; }
+    public PetModel? Pet { get; set; }
     [ValidateNever]
-    public IEnumerable<SelectListItem> CategoryList { get; set; }
+    public IEnumerable<SelectListItem>? CategoryList { get; set; }
 }

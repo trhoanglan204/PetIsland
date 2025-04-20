@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-using PetIsland.Models;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models.ViewModels;
-using System.Drawing.Drawing2D;
 
 #pragma warning disable IDE0290
 
@@ -52,5 +50,5 @@ namespace PetIslandWeb.Controllers
 
 			return View(viewModel);
 		}
-	}
+    }
 }

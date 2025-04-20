@@ -18,10 +18,12 @@ public class PetController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
-    public PetController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+    private readonly ILogger<PetController> _logger;
+    public PetController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment, ILogger<PetController> logger)
     {
         _context = context;
         _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -53,25 +55,39 @@ public class PetController : Controller
             var slug = await _context.Products.FirstOrDefaultAsync(p => p.Slug == pet.Slug);
             if (slug != null)
             {
-                ModelState.AddModelError("", "Thu cung đã có trong database");
+                ModelState.AddModelError("", "Thú cưng đã có trong database");
                 return View(pet);
             }
 
             if (pet.ImageUpload != null)
             {
+                if (pet.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(pet);
+                }
                 string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/pets");
-                string imageName = Guid.NewGuid().ToString() + "_" + pet.ImageUpload.FileName;
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(pet.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "default";
+                }
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(pet.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
-                var fs = new FileStream(filePath, FileMode.Create);
+                using var fs = new FileStream(filePath, FileMode.Create);
                 await pet.ImageUpload.CopyToAsync(fs);
                 fs.Close();
                 pet.Image = imageName;
             }
-
-            _context.Add(pet);
+            _context.Pets.Add(pet);
             await _context.SaveChangesAsync();
-            TempData["success"] = "Thêm thu cung thành công";
+            TempData["success"] = "Thêm thú cưng thành công";
             return RedirectToAction("Index");
 
         }
@@ -117,13 +133,40 @@ public class PetController : Controller
 
             if (pet.ImageUpload != null)
             {
+                if (pet.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(pet);
+                }
                 string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/pets");
-                string imageName = Guid.NewGuid().ToString() + "_" + pet.ImageUpload.FileName;
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(pet.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "pet_" + pet.Slug;
+                }
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(pet.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
                 var fs = new FileStream(filePath, FileMode.Create);
                 await pet.ImageUpload.CopyToAsync(fs);
                 fs.Close();
+                var oldImage = Path.Combine(uploadsDir, existed_pet.Image);
+                if (System.IO.File.Exists(oldImage))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldImage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldImage, ex.Message);
+                    }
+                }
                 existed_pet.Image = imageName;
             }
 
@@ -162,13 +205,17 @@ public class PetController : Controller
         {
             return NotFound();
         }
-        if (!string.Equals(pet.Image, "null.jpg"))
+        string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/pets");
+        string oldfilePath = Path.Combine(uploadsDir, pet.Image);
+        if (System.IO.File.Exists(oldfilePath))
         {
-            string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/pets");
-            string oldfilePath = Path.Combine(uploadsDir, pet.Image);
-            if (System.IO.File.Exists(oldfilePath))
+            try
             {
                 System.IO.File.Delete(oldfilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldfilePath, ex.Message);
             }
         }
         _context.Pets.Remove(pet);

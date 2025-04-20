@@ -2,13 +2,14 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using PetIsland.Models.Validation;
 
 namespace PetIsland.Models;
 
 public class PetModel
 {
     [Key]
-    public int Id { get; set; }
+    public long Id { get; set; }
     [Required, MaxLength(100)]
     public required string Name { get; set; }
     [Required(ErrorMessage = "Vui lòng chọn giới tính cho thú cưng")]
@@ -24,6 +25,7 @@ public class PetModel
     public string Description { get; set; } = string.Empty;
 
     [NotMapped]
+    [FileExtension]
     public IFormFile? ImageUpload { get; set; }
     [NotMapped]
     public string AgeDisplay

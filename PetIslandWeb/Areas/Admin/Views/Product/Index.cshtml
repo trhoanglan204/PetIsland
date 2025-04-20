@@ -49,7 +49,7 @@
 
                     </td>
                     <td>@item.SoldOut</td>
-                    <td><a asp-action="CreateProductQuantity" asp-controller="Product" asp-route-Id="@item.Id">Add Quantity</a></td>
+                    <td><a asp-action="CreateProductQuantity" asp-controller="Product" asp-route-Id="@item.Id">Add Quantity?</a></td>
                     <td>@Html.Raw(@item.Description)</td>
                     <td>@item.Price.ToString("#,##0 VNĐ")</td>
                     @if (@item.Image == "null.jpg")

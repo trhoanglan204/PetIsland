@@ -37,7 +37,12 @@
 
                         <div class="form-group">
                             <label>Ảnh đại diện hiện tại</label><br />
-                            <img src="~/images/users/@Model.Image" alt="Avatar" width="120" height="120" class="img-thumbnail" />
+                            @if(Model.Image == "blank_avatar.jpg"){
+                                <img src="~/images/blank_avatar.jpg" alt="Avatar" width="120" height="120" class="img-thumbnail" />
+                            }
+                            else{
+                                <img src="~/images/users/@Model.Image" alt="Avatar" width="120" height="120" class="img-thumbnail" />
+                            }
                         </div>
 
                         <div class="form-group">
@@ -85,4 +90,19 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        const maxSize = 5 * 1024 * 1024;
+        $("#ImageUpload").change(function () {
+            const file = this.files[0];
+
+            if (file){
+                if (file.size > maxSize) {
+                    alert("File ảnh không được lớn hơn 5MB.");
+                    $(this).val("");
+                    return;
+                }
+            }
+            readURL(this);
+        });
+    </script>
 }

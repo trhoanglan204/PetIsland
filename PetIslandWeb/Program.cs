@@ -66,7 +66,8 @@ namespace PetIslandWeb
             builder.Services.ConfigureApplicationCookie(options =>
             {
                 // Redirects settings.
-                options.LoginPath = "/Account/Login"; 
+                options.LoginPath = "/Account/Login";
+                options.AccessDeniedPath = "/Account/AccessDenied";
                 // Cookie settings.
                 options.Cookie.HttpOnly = true;
                 options.SlidingExpiration = true;
@@ -128,15 +129,15 @@ namespace PetIslandWeb
 
             app.UseStatusCodePagesWithReExecute("/Home/Error/", "?statuscode={0}");
 
-
             SeedDatabase();
+
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
-            //app.MapControllerRoute(
-            //name: "Areas",
-            //pattern: "{areas:exists}/{controller=Product}/{action=Index}/{id?}");
+            app.MapControllerRoute(
+            name: "Areas",
+            pattern: "{areas:exists}/{controller=Product}/{action=Index}/{id?}");
 
             app.MapRazorPages();
             app.MapHub<ChatHub>("/Realtime/Index");

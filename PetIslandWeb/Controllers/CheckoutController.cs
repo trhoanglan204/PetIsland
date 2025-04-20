@@ -37,12 +37,10 @@ public class CheckoutController : Controller
 		}
 		else
 		{
-
 			var ordercode = Guid.NewGuid().ToString();
             var orderItem = new OrderModel
             {
                 OrderCode = ordercode,
-
                 UserName = userEmail,
                 Status = 1,
                 CreatedDate = DateTime.Now
@@ -81,15 +79,19 @@ public class CheckoutController : Controller
 				_dataContext.Update(product);
 				_dataContext.Add(orderdetail);
 				_dataContext.SaveChanges();
-
 			}
 			HttpContext.Session.Remove("Cart");
-			//Send mail order when success
-			//var receiver = userEmail;
-			//var subject = "Đặt hàng thành công";
-			//var message = "Đặt hàng thành công, trải nghiệm dịch vụ nhé.";
-
-			//await _emailSender.SendEmailAsync(receiver, subject, message);
+            //Send mail order when success
+            if (ClaimTypes.Role != SD.Role_Admin && ClaimTypes.Role != SD.Role_Employee)
+            {
+                var receiver = userEmail;
+                if (!string.IsNullOrEmpty(receiver))
+                {
+                    var subject = "Đặt hàng thành công";
+                    var message = "Đặt hàng thành công, trải nghiệm dịch vụ nhé.";
+                    await _emailSender.SendEmailAsync(receiver, subject, message);
+                }
+            }
 
 			TempData["success"] = "Đơn hàng đã được tạo,vui lòng chờ duyệt đơn hàng nhé.";
 			return RedirectToAction("History", "Account");
@@ -103,8 +105,4 @@ public class CheckoutController : Controller
 
 		return Json(response);
 	}
-
-
-
-
 }

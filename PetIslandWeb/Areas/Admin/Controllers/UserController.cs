@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Drawing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,6 +8,7 @@ using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
 using PetIsland.Utility;
+using PetIslandWeb.Controllers;
 
 #pragma warning disable IDE0290
 
@@ -20,11 +22,16 @@ public class UserController : Controller
     private readonly UserManager<AppUserModel> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ApplicationDbContext _context;
-    public UserController(UserManager<AppUserModel> userManager,ApplicationDbContext context, RoleManager<IdentityRole> roleManager)
+    private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly ILogger<UserController> _logger;
+    public UserController(UserManager<AppUserModel> userManager,ApplicationDbContext context, 
+        RoleManager<IdentityRole> roleManager, IWebHostEnvironment webHostEnvironment, ILogger<UserController> logger)
     {
         _context = context;
         _roleManager = roleManager;
         _userManager = userManager;
+        _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -34,7 +41,13 @@ public class UserController : Controller
         var usersWithRoles = await (from u in _context.Users
                                     join ur in _context.UserRoles on u.Id equals ur.UserId
                                     join r in _context.Roles on ur.RoleId equals r.Id
-                                    select new { User = u, RoleName = r.Name })
+                                    select new UserWithRoleVM { User = u, RoleName = r.Name })
+                    .GroupBy(x =>x.User)
+                    .Select(g => new UserWithRoleVM 
+                    { 
+                        User = g.Key,
+                        RoleName = string.Join(", ",g.Select(x=>x.RoleName))
+                    })
                    .ToListAsync();
         return View(usersWithRoles);
     }
@@ -115,17 +128,21 @@ public class UserController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Route("Create")]
-    public async Task<IActionResult> Create(AppUserModel user)
+    public async Task<IActionResult> Create(UserVM user, string role)
     {
         if (ModelState.IsValid)
         {
-            var createUserResult = await _userManager.CreateAsync(user, user.PasswordHash); //tạo user
+            var newUser = new AppUserModel
+            {
+                UserName = user.Username,
+                Email = user.Email,
+                Role = SD.Role_Customer,
+                Avatar = user.Image,
+            };
+            var createUserResult = await _userManager.CreateAsync(newUser, user.Password); //tạo user
             if (createUserResult.Succeeded)
             {
-                var createUser = await _userManager.FindByEmailAsync(user.Email); //tìm user dựa vào email
-                var userId = createUser.Id; // lấy user Id
-                var role = _roleManager.FindByIdAsync(user.Role); //lấy Role
-                var addToRoleResult = await _userManager.AddToRoleAsync(createUser, role.Result.Name);
+                var addToRoleResult = await _userManager.AddToRoleAsync(newUser, role);
                 if (!addToRoleResult.Succeeded)
                 {
                     foreach (var error in createUserResult.Errors)
@@ -177,6 +194,19 @@ public class UserController : Controller
         if (!deleteResult.Succeeded)
         {
             return View("Error");
+        }
+        string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/users");
+        string oldfilePath = Path.Combine(uploadsDir, user.Avatar!);
+        if (System.IO.File.Exists(oldfilePath))
+        {
+            try
+            {
+                System.IO.File.Delete(oldfilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldfilePath, ex.Message);
+            }
         }
         TempData["success"] = "User đã được xóa thành công";
         return RedirectToAction("Index");

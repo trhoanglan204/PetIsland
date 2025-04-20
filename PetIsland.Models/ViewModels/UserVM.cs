@@ -8,6 +8,7 @@ namespace PetIsland.Models.ViewModels;
 public class UserVM
 {
     [Required(ErrorMessage = "Vui lòng nhập user name")]
+    [RegularExpression(@"^\S+$", ErrorMessage = "Username không được chứa khoảng trắng")]
     public string? Username { get; set; } 
     [Required(ErrorMessage = "Vui lòng nhập user email"), EmailAddress]
     public string? Email { get; set; }
@@ -22,7 +23,7 @@ public class UserVM
     public string? PostalCode { get; set; }
 
     [NotMapped]
-    [FileExtensions(Extensions = "jpg,jpeg,png", ErrorMessage = "Chỉ chấp nhận ảnh có đuôi jpg, jpeg, png")]
+    [FileExtension]
     public IFormFile? ImageUpload { get; set; }
 }
 //nullable due to may login as Google

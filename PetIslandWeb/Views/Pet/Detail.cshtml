@@ -14,7 +14,14 @@
 			<!--product-details-->
 			<div class="col-sm-5">
 				<div class="view-product">
-					<img src="~/images/pets/@Model.Pet.Image" alt="" width="100px" height="200px" />
+					@if (@Model.Pet!.Image == "null.jpg")
+					{
+						<img src="~/images/null.jpg" alt="" width="100px" height="200px" />
+					}
+					else
+					{
+						<img src="~/images/pets/@Model.Pet.Image" alt="" width="100px" height="200px" />
+					}
 					<h3>ZOOM</h3>
 				</div>
 				<div id="similar-product" class="carousel slide" data-ride="carousel">
@@ -45,7 +52,7 @@
 					<p><b>Sex:</b> @Model.Pet.SexDisplay</p>
 					<p><b>Age:</b> @Model.Pet.AgeDisplay</p>
 					<p><b>Description:</b> @Model.Pet.Description</p>
-					<p><b>Category:</b> @Model.Pet.PetCategory.Name</p>
+					<p><b>Category:</b> @Model.Pet.PetCategory?.Name</p>
 					<a href=""><img src="images/product-details/share.png" class="share img-responsive" alt="" /></a>
 				</div><!--/product-information-->
 			</div>
@@ -147,15 +154,12 @@
 						<div class="col-sm-4">
 								<div class="product-image-wrapper">
 									<div class="single-products">
-
-
 										<div class="productinfo text-center">
 											<a asp-action="Detail" asp-controller="Product" asp-route-Id="@relatedPet.Id">
 												<img src="~/images/pets/@relatedPet.Image" alt="@relatedPet.Name" width="100px" height="200px" />
 												<p>@relatedPet.Name</p>
-												<p>Giống: @relatedPet.PetCategory.Name</p>
+												<p>Giống: @relatedPet.PetCategory?.Name</p>
 											</a>
-											
 										</div>
 
 

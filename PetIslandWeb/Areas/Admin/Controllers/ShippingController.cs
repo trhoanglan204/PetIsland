@@ -59,7 +59,11 @@ public class ShippingController : Controller
     }
     public async Task<IActionResult> Delete(int Id)
     {
-        ShippingModel shipping = await _context.Shippings.FindAsync(Id);
+        ShippingModel? shipping = await _context.Shippings.FindAsync(Id);
+        if (shipping == null)
+        {
+            return NotFound();
+        }
 
         _context.Shippings.Remove(shipping);
         await _context.SaveChangesAsync();

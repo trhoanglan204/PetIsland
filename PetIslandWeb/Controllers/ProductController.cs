@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PetIsland.Models;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models.ViewModels;
-using System.Drawing.Drawing2D;
+using Microsoft.AspNetCore.Authorization;
 
 #pragma warning disable IDE0290
 
@@ -12,11 +12,11 @@ namespace PetIslandWeb.Controllers
 {
 	public class ProductController : Controller
 	{
-		private readonly ApplicationDbContext _dataContext;
+        private readonly ApplicationDbContext _dataContext;
 		public ProductController(ApplicationDbContext context)
 		{
 			_dataContext = context;
-		}
+        }
 		public async Task<IActionResult> Index()
 		{
 			var products = await _dataContext.Products.ToListAsync();
@@ -37,19 +37,45 @@ namespace PetIslandWeb.Controllers
 		{
 			if (Id == null || Id <= 0) return RedirectToAction("Index");
 
-			var productsById = _dataContext.Products.
+			var productsById = await _dataContext.Products.
 				Include(p => p.Ratings).
-				Where(p => p.Id == Id).FirstOrDefault()!; //category = 4
-														 //related product
-
+				Include(p => p.ProductCategory).
+                Include(p => p.Brand).
+                FirstOrDefaultAsync(p => p.Id == Id);
+			if (productsById == null)
+			{
+				return NotFound();
+			}											
 			var relatedProducts = await _dataContext.Products
 			.Where(p => p.ProductCategoryId == productsById.ProductCategoryId && p.Id != productsById.Id)
 			.Take(4)
 			.ToListAsync();
 
-			ViewBag.RelatedProducts = relatedProducts;
+            ViewBag.RelatedProducts = relatedProducts;
 
-			var viewModel = new ProductVM
+            var currentUserEmail = User.Identity?.Name ?? "";
+
+            var topPositive = await _dataContext.RatingEntries
+				.Where(r => r.ProductId == Id && r.Email != currentUserEmail)
+				.OrderByDescending(r => r.Star)
+                .ThenByDescending(r => r.Id)
+                .Take(5)
+				.ToListAsync();
+
+            var topNegative = await _dataContext.RatingEntries
+                .Where(r => r.ProductId == Id && r.Email != currentUserEmail)
+                .OrderBy(r => r.Star)
+                .ThenBy(r => r.Id)
+                .Take(5)
+                .ToListAsync();
+
+			ViewBag.TopPositiveRatings = topPositive;
+			ViewBag.TopNegativeRatings = topNegative;
+
+			var userRating = await _dataContext.RatingEntries.FirstOrDefaultAsync(r => r.ProductId == Id && r.Email == currentUserEmail);
+			ViewBag.UserRatingEntry = userRating;
+
+            var viewModel = new ProductVM
 			{
 				Product = productsById,
 			};
@@ -59,29 +85,58 @@ namespace PetIslandWeb.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
+		[Authorize]
 
-		public async Task<IActionResult> CommentProduct(RatingModel rating)
+		public async Task<IActionResult> CommentProduct(ProductVM rating, string? returnUrl)
 		{
 			if (ModelState.IsValid)
 			{
+				var productId = rating.Product!.Id;
+				var userEmail = User.Identity!.Name!;
 
-				var ratingEntity = new RatingModel
+                var ratingEntry = await _dataContext.RatingEntries.FirstOrDefaultAsync(r => r.ProductId == productId && r.Email == userEmail);
+
+				if (ratingEntry == null)
 				{
-					ProductId = rating.ProductId,
-					Name = rating.Name,
-					Email = rating.Email,
-					Comment = rating.Comment,
-					Star = rating.Star
-
-				};
-
-				_dataContext.Ratings.Add(ratingEntity);
+					//user rate for first time
+					ratingEntry = new RatingEntryModel 
+					{ 
+						ProductId = productId,
+						Email = userEmail,
+						Star = rating.UserStar,
+						RatingDate = DateTime.UtcNow,
+						Comment = rating.Comment
+					};
+					await _dataContext.RatingEntries.AddAsync(ratingEntry);
+					var ratingModel = await _dataContext.Ratings.FirstOrDefaultAsync(r => r.ProductId == productId);
+                    if (ratingModel != null)
+                    {
+                        ratingModel.TotalRated += 1;
+                    }
+                }
+				else
+				{
+					//user edit their rating
+					ratingEntry.Star = rating.UserStar;
+					ratingEntry.Comment = rating.Comment;
+					ratingEntry.RatingDate = DateTime.UtcNow;
+				}
 				await _dataContext.SaveChangesAsync();
 
-				TempData["success"] = "Thêm đánh giá thành công";
+                // update trung bình
+                var ratings = _dataContext.RatingEntries.Where(r => r.ProductId == productId);
+                var avg = await ratings.AverageAsync(r => r.Star);
+                var existingRating = await _dataContext.Ratings.FirstOrDefaultAsync(r => r.ProductId == productId);
+                if (existingRating != null)
+                {
+                    existingRating.Star = Math.Round((decimal)avg, 1);
+                    await _dataContext.SaveChangesAsync();
+                }
+                TempData["success"] = "Thêm đánh giá thành công";
 
-				return Redirect(Request.Headers.Referer);
-			}
+                //return Redirect(Request.Headers.Referer);
+                return Redirect(returnUrl ?? Url.Action("Detail", new { id = productId })!);
+            }
 			else
 			{
 				TempData["error"] = "Model có một vài thứ đang lỗi";
@@ -93,9 +148,7 @@ namespace PetIslandWeb.Controllers
 						errors.Add(error.ErrorMessage);
 					}
 				}
-				//string errorMessage = string.Join("\n", errors);
-
-				return RedirectToAction("Detail", new { id = rating.ProductId });
+				return RedirectToAction("Detail", new { id = rating.Product!.Id });
 			}
 		}
 	}

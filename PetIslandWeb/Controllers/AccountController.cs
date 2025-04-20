@@ -12,6 +12,8 @@ using PetIsland.Utility;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using PetIslandWeb.Areas.Admin.Controllers;
+using System.Drawing;
 
 #pragma warning disable IDE0290
 
@@ -24,14 +26,16 @@ public class AccountController : Controller
 	private readonly IEmailSender _emailSender;
 	private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly ILogger<AccountController> _logger;
     public AccountController(IEmailSender emailSender, UserManager<AppUserModel> userManage,
-		SignInManager<AppUserModel> signInManager, ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+		SignInManager<AppUserModel> signInManager, ApplicationDbContext context, IWebHostEnvironment webHostEnvironment, ILogger<AccountController> logger)
 	{
 		_userManager = userManage;
 		_signInManager = signInManager;
 		_emailSender = emailSender;
 		_context = context;
         _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
 	[HttpGet]
 	public IActionResult Login(string returnUrl)
@@ -45,7 +49,14 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(loginVM.Username, loginVM.Password, isPersistent: false, lockoutOnFailure: true);
+            var user = await _userManager.FindByNameAsync(loginVM.Username!)
+            ?? await _userManager.FindByEmailAsync(loginVM.Username!);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Tài khoản không tồn tại.");
+                return View(loginVM);
+            }
+            Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user.UserName!, loginVM.Password!, isPersistent: false, lockoutOnFailure: true);
             if (result.IsLockedOut)
             {
                 ModelState.AddModelError("", "Tài khoản bị khóa trong 5 phút do đăng nhập sai quá nhiều lần.");
@@ -54,8 +65,7 @@ public class AccountController : Controller
             if (result.Succeeded)
             {
 				TempData["success"] = "Đăng nhập thành công";
-				var user = await _userManager.FindByNameAsync(loginVM.Username);
-				if (user!.Role != SD.Role_Admin)
+				if (user!.Role != SD.Role_Admin && user.Role != SD.Role_Employee)
 				{
 					var receiver = user.Email;
 					if (!string.IsNullOrEmpty(receiver))
@@ -293,12 +303,40 @@ public class AccountController : Controller
             }
             if (model.ImageUpload != null)
             {
+                if (model.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(model);
+                }
                 string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/users");
-                string imageName = user.UserName + "_" + model.ImageUpload.FileName;
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(model.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+					baseName = "avatar_" + model.Username;
+                }
+                baseName = CommonHelpers.SanitizeFileName(baseName);
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(model.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
                 var fs = new FileStream(filePath, FileMode.Create);
                 await model.ImageUpload.CopyToAsync(fs);
                 fs.Close();
+                var oldImage = Path.Combine(uploadsDir, user.Avatar!);
+                if (System.IO.File.Exists(oldImage))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldImage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldImage, ex.Message);
+                    }
+                }
                 user.Avatar = imageName;
                 isModified = true;
             }
@@ -396,4 +434,11 @@ public class AccountController : Controller
 		await _signInManager.SignInAsync(existingUser, isPersistent: false);
 		return Redirect("/");
 	}
+
+
+    [HttpGet]
+    public IActionResult AccessDenied()
+    {
+        return View();
+    }
 }

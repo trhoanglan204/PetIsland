@@ -14,15 +14,14 @@ namespace PetIslandWeb.Controllers;
 public class CartController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private static string? CompanyAddress;
     public CartController(ApplicationDbContext context)
     {
         _context = context;
     }
-    public IActionResult Index(ShippingModel shippingModel)
+    public IActionResult Index()
     {
-
-
-        List<CartItemModel> cartItems = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? new List<CartItemModel>();
+        List<CartItemModel> cartItems = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
         // Nhận shipping giá từ cookie
         var shippingPriceCookie = Request.Cookies["ShippingPrice"];
         decimal shippingPrice = 0;
@@ -42,23 +41,20 @@ public class CartController : Controller
             GrandTotal = cartItems.Sum(x => x.Quantity * x.Price),
             ShippingPrice = shippingPrice,
             CouponCode = coupon_code
-
         };
 
         return View(cartVM);
     }
 
-    //public IActionResult Checkout()
-    //{
-    //	return View();
-    //}
-
     public async Task<IActionResult> Add(long Id)
     {
-        ProductModel product = await _context.Products.FindAsync(Id);
-        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? new List<CartItemModel>();
-        CartItemModel cartItems = cart.Where(c => c.ProductId == Id).FirstOrDefault();
-
+        ProductModel? product = await _context.Products.FindAsync(Id);
+        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
+        CartItemModel? cartItems = cart.Where(c => c.ProductId == Id).FirstOrDefault();
+        if(product == null)
+        {
+            return NotFound();
+        }
         if (cartItems == null)
         {
             cart.Add(new CartItemModel(product));
@@ -71,12 +67,16 @@ public class CartController : Controller
         HttpContext.Session.SetJson("Cart", cart);
 
         TempData["success"] = "Add Product to cart Sucessfully! ";
-        return Redirect(Request.Headers["Referer"].ToString());
+        return Redirect(Request.Headers.Referer.ToString());
     }
-    public async Task<IActionResult> Decrease(int Id)
+    public IActionResult Decrease(int Id)
     {
         List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
-        CartItemModel cartItem = cart.Where(c => c.ProductId == Id).FirstOrDefault();
+        CartItemModel? cartItem = cart.Where(c => c.ProductId == Id).FirstOrDefault();
+        if (cartItem == null)
+        {
+            return NotFound();
+        }
         if (cartItem.Quantity > 1)
         {
             --cartItem.Quantity;
@@ -98,12 +98,20 @@ public class CartController : Controller
         return RedirectToAction("Index");
     }
 
-    public async Task<IActionResult> Increase(int Id)
+    public async Task<IActionResult> Increase(long Id)
     {
-        ProductModel product = await _context.Products.Where(p => p.Id == Id).FirstOrDefaultAsync();
+        ProductModel? product = await _context.Products.Where(p => p.Id == Id).FirstOrDefaultAsync();
 
         List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
-        CartItemModel cartItem = cart.Where(c => c.ProductId == Id).FirstOrDefault();
+        CartItemModel? cartItem = cart.Where(c => c.ProductId == Id).FirstOrDefault();
+        if (cartItem == null)
+        {
+            return NotFound();
+        }
+        if (product == null)
+        {
+            return NotFound();
+        }
         if (cartItem.Quantity >= 1 && product.Quantity > cartItem.Quantity)
         {
             ++cartItem.Quantity;
@@ -113,8 +121,6 @@ public class CartController : Controller
         {
             cartItem.Quantity = product.Quantity;
             TempData["success"] = "Maximum Product Quantity to cart Sucessfully! ";
-
-            //cart.RemoveAll(p => p.ProductId == Id);
         }
         if (cart.Count == 0)
         {
@@ -125,11 +131,10 @@ public class CartController : Controller
             HttpContext.Session.SetJson("Cart", cart);
         }
 
-
         return RedirectToAction("Index");
     }
 
-    public async Task<IActionResult> Remove(int Id)
+    public IActionResult Remove(int Id)
     {
         List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
         cart.RemoveAll(p => p.ProductId == Id);
@@ -146,7 +151,7 @@ public class CartController : Controller
         return RedirectToAction("Index");
     }
 
-    public async Task<IActionResult> Clear()
+    public IActionResult Clear()
     {
         HttpContext.Session.Remove("Cart");
 
@@ -155,7 +160,7 @@ public class CartController : Controller
     }
     [HttpPost]
     [Route("Cart/GetShipping")]
-    public async Task<IActionResult> GetShipping(ShippingModel shippingModel, string quan, string tinh, string phuong)
+    public async Task<IActionResult> GetShipping(string tinh, string quan, string phuong)
     {
 
         var existingShipping = await _context.Shippings
@@ -186,57 +191,51 @@ public class CartController : Controller
         }
         catch (Exception ex)
         {
-            //
             Console.WriteLine($"Error adding shipping price cookie: {ex.Message}");
         }
         return Json(new { shippingPrice });
     }
+
     [HttpPost]
     [Route("Cart/GetCoupon")]
-    public async Task<IActionResult> GetCoupon(CouponModel couponModel, string coupon_value)
+    public async Task<IActionResult> GetCoupon(string coupon_value)
     {
         var validCoupon = await _context.Coupons
             .FirstOrDefaultAsync(x => x.Name == coupon_value && x.Quantity >= 1);
-
-        string couponTitle = validCoupon.Name + " | " + validCoupon?.Description;
-
-        if (couponTitle != null)
+        if (validCoupon == null)
         {
-            TimeSpan remainingTime = validCoupon.DateExpired - DateTime.Now;
-            int daysRemaining = remainingTime.Days;
+            //mean no coupon available
+            return Ok(new { success = false, message = "Coupon not existed" });
+        }
+        string couponTitle = validCoupon.Name + " | " + validCoupon.Description;
+        TimeSpan remainingTime = validCoupon.DateExpired - DateTime.Now;
+        int daysRemaining = remainingTime.Days;
 
-            if (daysRemaining >= 0)
+        if (daysRemaining >= 0)
+        {
+            try
             {
-                try
+                var cookieOptions = new CookieOptions
                 {
-                    var cookieOptions = new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(30),
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict // Kiểm tra tính tương thích trình duyệt
-                    };
+                    HttpOnly = true,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(30),
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict // Kiểm tra tính tương thích trình duyệt
+                };
 
-                    Response.Cookies.Append("CouponTitle", couponTitle, cookieOptions);
-                    return Ok(new { success = true, message = "Coupon applied successfully" });
-                }
-                catch (Exception ex)
-                {
-                    //trả về lỗi 
-                    Console.WriteLine($"Error adding apply coupon cookie: {ex.Message}");
-                    return Ok(new { success = false, message = "Coupon applied failed" });
-                }
+                Response.Cookies.Append("CouponTitle", couponTitle, cookieOptions);
+                return Ok(new { success = true, message = "Coupon applied successfully" });
             }
-            else
+            catch (Exception ex)
             {
-
-                return Ok(new { success = false, message = "Coupon has expired" });
+                //trả về lỗi 
+                Console.WriteLine($"Error adding apply coupon cookie: {ex.Message}");
+                return Ok(new { success = false, message = "Coupon applied failed" });
             }
-
         }
         else
         {
-            return Ok(new { success = false, message = "Coupon not existed" });
+            return Ok(new { success = false, message = "Coupon has expired" });
         }
     }
 
