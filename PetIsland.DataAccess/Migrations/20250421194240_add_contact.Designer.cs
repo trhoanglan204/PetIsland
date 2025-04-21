@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetIsland.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using PetIsland.DataAccess.Data;
 namespace PetIsland.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250421194240_add_contact")]
+    partial class add_contact
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -295,12 +298,6 @@ namespace PetIsland.DataAccess.Migrations
 
                     b.Property<string>("ORS_Key")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("ORS_lat")
-                        .HasColumnType("float");
-
-                    b.Property<double>("ORS_lon")
-                        .HasColumnType("float");
 
                     b.Property<string>("Phone")
                         .IsRequired()

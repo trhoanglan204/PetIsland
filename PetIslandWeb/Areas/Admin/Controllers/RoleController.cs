@@ -82,12 +82,12 @@ public class RoleController : Controller
     [Route("Create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(IdentityRole model)
+    public IActionResult Create(IdentityRole model)
     {
         //avoid duplicate role
-        if (!_roleManager.RoleExistsAsync(model.Name).GetAwaiter().GetResult())
+        if (!_roleManager.RoleExistsAsync(model.Name!).GetAwaiter().GetResult())
         {
-            _roleManager.CreateAsync(new IdentityRole(model.Name)).GetAwaiter().GetResult();
+            _roleManager.CreateAsync(new IdentityRole(model.Name!)).GetAwaiter().GetResult();
         }
         return Redirect("Index");
     }

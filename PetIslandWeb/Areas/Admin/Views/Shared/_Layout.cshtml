@@ -61,12 +61,13 @@
 							<li><a asp-area="Admin" asp-action="Index" asp-controller="Product"> Products</a></li>
 							<li><a asp-area="Admin" asp-action="Index" asp-controller="Shipping"> Shippings</a></li>
 							<li><a asp-area="Admin" asp-action="Index" asp-controller="Contact"> Contacts</a></li>
-							<li><a asp-area="Admin" asp-action="Index" asp-controller="ProductCategory">Product Categories</a></li>
-							<li><a asp-area="Admin" asp-action="Index" asp-controller="PetCategory">Pet Categories</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="ProductCategory"> Product Categories</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="PetCategory"> Pet Categories</a></li>
 							<li><a asp-area="Admin" asp-action="Index" asp-controller="Brand"> Brands</a></li>
 							@if(User.IsInRole(SD.Role_Admin)){
 								<li><a asp-area="Admin" asp-action="Index" asp-controller="User"> Users</a></li>
 								<li><a asp-area="Admin" asp-action="Index" asp-controller="Role"> Roles</a></li>
+								<li><a asp-area="Admin" asp-action="Index" asp-controller="Contact"> Contact</a></li>
 							}
 							<li><a asp-area="Admin" asp-action="Index" asp-controller="Order"> Orders</a></li>
 							<li><a asp-area="Admin" asp-action="Index" asp-controller="Coupon"> Coupon</a></li>

@@ -1,0 +1,50 @@
+﻿@model ContactModel
+@{
+    ViewData["title"] = "Edit Contact";
+}
+
+
+<h3>Edit Contact</h3>
+
+<div class="col-md-9">
+    <form asp-action="Edit" asp-controller="Contact" method="post" enctype="multipart/form-data">
+        
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div asp-for="Id" type="hidden"></div>
+        <div class="form-group">
+            <label>Name</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <input asp-for="Phone" class="form-control" />
+            <span asp-validation-for="Phone" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Map</label>
+            <textarea asp-for="Address" class="form-control"> </textarea>
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+    </form>
+
+    <a asp-action="Index">Back to list contact</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }    
+}
+

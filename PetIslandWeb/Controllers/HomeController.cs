@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
+using PetIslandWeb.Services.ORS;
 
 #pragma warning disable IDE0290
 
@@ -13,14 +14,16 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly ApplicationDbContext _context;
+    private readonly GeocodingService _geoService;
     private static List<GroupMemberModel>? ListMembers;
     private readonly UserManager<AppUserModel> _userManager;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<AppUserModel> userManager)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<AppUserModel> userManager, GeocodingService geoService)
     {
         _logger = logger;
         _context = context;
         _userManager = userManager;
+        _geoService = geoService;
     }
 
     public async Task<IActionResult> Index()
@@ -87,12 +90,6 @@ public class HomeController : Controller
                            .ToListAsync();
         return View(wishlist_product);
     }
-
-    public IActionResult Contact()
-    {
-        return View();
-    }
-
     public IActionResult Search()
     {
         return View();
@@ -129,30 +126,61 @@ public class HomeController : Controller
                     Name = "Nguyen Thi Hong Anh",
                     MSSV = "AT19N0101",
                     ImageUrl = "shin_heart.jpg",
-                    Nickname = "anhnottham"
+                    Nickname = "anhnottham",
+                    LinkFB = "https://www.facebook.com/anhnottham",
+                    LinkLinkedin = "https://www.linkedin.com/in/anhnottham/"
                 },
                 new GroupMemberModel
                 {
                     Name = "Nguyen Anh Khoi",
                     MSSV = "AT19N0121",
                     ImageUrl = "shin_uncensored.jpg",
+                    Nickname = "anhkhoii",
+                    LinkFB = "https://www.facebook.com/anhkhoii",
+                    LinkLinkedin = "https://www.linkedin.com/in/anhkhoii/"
                 },
                 new GroupMemberModel
                 {
                     Name = "Truong Hoang Lan",
                     MSSV = "AT19N0123",
                     ImageUrl = "shin_dev.jpg",
-                    Nickname = "hlaan"
+                    Nickname = "hlaan",
+                    LinkFB = "https://www.facebook.com/hlaan.dev",
+                    LinkLinkedin = "https://www.linkedin.com/in/hlaan/"
                 },
                 new GroupMemberModel
                 {
                     Name = "Truong Van Thieu",
                     MSSV = "AT19N0138",
                     ImageUrl = "shin_sleep.jpg",
-                    Nickname = "TvT"
+                    Nickname = "TvT",
+                    LinkFB = "https://www.facebook.com/tvthieu",
+                    LinkLinkedin = "https://www.linkedin.com/in/truongvanthieu/"
                 }
             ];
         return View(ListMembers);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Contact()
+    {
+        var contact = await _context.Contact.FirstOrDefaultAsync();
+        if (contact != null)
+        {
+            var key = contact.ORS_Key;
+            if (key != null && (contact.ORS_lon == 0 || contact.ORS_lat == 0))
+            {
+                var ORS = await _geoService.GeocodeSearchAsync(contact.Address!);
+                if (ORS != null)
+                {
+                    contact.ORS_lon = ORS.lon;
+                    contact.ORS_lat = ORS.lat;
+                    _context.Update(contact);
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
+        return View(contact); //nullable
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

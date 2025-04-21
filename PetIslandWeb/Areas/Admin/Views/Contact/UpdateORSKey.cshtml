@@ -1,0 +1,23 @@
+﻿@model ContactModel
+
+@{
+    ViewData["Title"] = "Cập nhật ORS Key";
+}
+
+<h2>Cập nhật ORS Key</h2>
+
+<form asp-action="UpdateORSKey" method="post">
+    <input type="hidden" asp-for="Address" value="@Model.Address" />
+    <div class="form-group">
+        <label for="ORS_Key">ORS Key hiện tại:</label>
+        <input asp-for="ORS_Key" class="form-control" />
+        <span asp-validation-for="ORS_Key" class="text-danger"></span>
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Cập nhật</button>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

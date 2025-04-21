@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.ComponentModel;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.Models;
@@ -32,4 +33,5 @@ public class ApplicationDbContext : IdentityDbContext<AppUserModel>
     public DbSet<RatingModel> Ratings { get; set; }
     public DbSet<RatingEntryModel> RatingEntries { get; set; }
     public DbSet<StatisticalModel> Statisticals { get; set; }
+    public DbSet<ContactModel> Contact { get; set; }
 }

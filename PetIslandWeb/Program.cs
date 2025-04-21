@@ -10,6 +10,7 @@ using PetIsland.Models.Momo;
 using PetIslandWeb.Services.Momo;
 using PetIslandWeb.Services.Vnpay;
 using Microsoft.AspNetCore.Authentication.Google;
+using PetIslandWeb.Services.ORS;
 
 namespace PetIslandWeb
 {
@@ -32,6 +33,7 @@ namespace PetIslandWeb
 
             builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IDbInitializer,DbInitializer>();
+            builder.Services.AddHttpClient<GeocodingService>(); //scoped
 
             builder.Services.AddControllersWithViews();
 

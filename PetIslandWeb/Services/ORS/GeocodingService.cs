@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
-using System.Text;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using PetIsland.Models.ORS;
+using PetIsland.DataAccess.Data;
 
 namespace PetIslandWeb.Services.ORS;
 
@@ -10,21 +8,35 @@ namespace PetIslandWeb.Services.ORS;
 public class GeocodingService
 {
     private readonly HttpClient _httpClient;
-    private string? ORS_Key { get; set; }
+    private string _apiKey = string.Empty;
+    private readonly ApplicationDbContext _context;
+
     private static readonly string UrlSearch = "https://api.openrouteservice.org/geocode/search?api_key=";
     private static readonly string UrlDistance = "https://api.openrouteservice.org/v2/directions/driving-car?api_key=";
-
-    public GeocodingService(HttpClient httpClient, IConfiguration _config)
+    //account.heigit.org/manage/key
+    public GeocodingService(HttpClient httpClient, ApplicationDbContext context)
     {
         _httpClient = httpClient;
-        ORS_Key = _config.GetValue<string>("ORS:Key");
+        _context = context;
+
+        var key = _context.Contact.FirstOrDefault()?.ORS_Key;
+        if (!string.IsNullOrEmpty(key))
+        {
+            _apiKey = key;
+        }
+    }
+    public void SetKey(string key)
+    {
+        _apiKey = key;
     }
 
-    public async Task<(double lon, double lat)?> GeocodeSearchAsync(string address)
+    public async Task<ORSprofile?> GeocodeSearchAsync(string address)
     {
-        string encodedAddress = Uri.EscapeDataString(address);
-        string url = $"{UrlSearch}{ORS_Key}&text={encodedAddress}";
+        if (string.IsNullOrEmpty(_apiKey))
+            return null;
 
+        string encodedAddress = Uri.EscapeDataString(address);
+        string url = $"{UrlSearch}{_apiKey}&text={encodedAddress}";
         var response = await _httpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode)
             return null;
@@ -43,13 +55,16 @@ public class GeocodingService
         double lon = coords[0]?.Value<double>() ?? 0;
         double lat = coords[1]?.Value<double>() ?? 0;
 
-        return (lon, lat);
+        return new ORSprofile { lon = lon, lat = lat};
     }
-    public async Task<long> CalculateDistance(ORSprofile user, ORSprofile company)
+    public async Task<long> CalculateDistance(ORSprofile A, ORSprofile B)
     {
-        var companyAddr = $"{company.lon},{company.lat}";
-        var userAddr = $"{user.lon},{user.lat}";
-        string url = $"{UrlDistance}{ORS_Key}&start={companyAddr}&end={userAddr}";
+        if (string.IsNullOrEmpty(_apiKey))
+            return 0;
+
+        var from = $"{B.lon},{B.lat}";
+        var to = $"{A.lon},{A.lat}";
+        string url = $"{UrlDistance}{_apiKey}&start={from}&end={to}";
 
         var response = await _httpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode)
