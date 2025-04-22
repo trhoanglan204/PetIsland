@@ -94,11 +94,30 @@
 
 	<footer id="footer">
 		<!--Footer-->
-		
+		<partial name="_FooterPartial" />
+		<div class="col-sm-3">
+			<img src="~/images/home/map.png" alt=""/>
+		</div>
 
-		
+		<div class="col-sm-3 col-sm-offset-1">
+			<div class="single-widget">
+				<h2>About Shopper</h2>
+				<form action="#" class="searchform">
+					<input type="text" placeholder="Your email address" />
+					<button type="submit" class="btn btn-default"><i class="fa fa-arrow-circle-o-right"></i></button>
+					<p>Get the most recent updates from <br />our site and be updated your self...</p>
+				</form>
+			</div>
+		</div>
 
-		
+		<div class="footer-bottom">
+			<div class="container">
+				<div class="row">
+					<p class="pull-left">Copyright © 2025 PetIsland Inc. All rights reserved.</p>
+					<p class="pull-right">Designed by <span><a target="_blank" href="">AT19N</a></span></p>
+				</div>
+			</div>
+		</div>
 
 	</footer><!--/Footer-->
 
@@ -122,6 +141,8 @@
 
 
 	<script src="~/js/main.js"></script>
+	<div id="fb-root"></div>
+	<script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v22.0"></script>
 	<script src="~/backend/js/site.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
 	<script>

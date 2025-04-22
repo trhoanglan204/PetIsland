@@ -6,6 +6,8 @@ using PetIsland.Models.Momo;
 using System.Security.Cryptography;
 using System.Text;
 
+#pragma warning disable IDE0290
+
 namespace PetIslandWeb.Services.Momo;
 
 public class MomoService : IMomoService

@@ -74,6 +74,7 @@ public class ContactController : Controller
                 existed_contact.Name = contact.Name;
                 existed_contact.Email = contact.Email;
                 existed_contact.Phone = contact.Phone;
+                existed_contact.Map = contact.Map;
                 existed_contact.Address = contact.Address;
                 var ORS = await _geoService.GeocodeSearchAsync(contact.Address!);
                 if (ORS != null)

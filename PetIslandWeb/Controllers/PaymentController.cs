@@ -24,7 +24,6 @@ public class PaymentController : Controller
 		return Redirect(response.PayUrl);
 	}
 
-
 	[HttpGet]
 	public IActionResult PaymentCallBack()
 	{

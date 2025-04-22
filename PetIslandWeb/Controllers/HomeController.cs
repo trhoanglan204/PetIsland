@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
-using PetIslandWeb.Services.ORS;
 
 #pragma warning disable IDE0290
 
@@ -14,16 +13,14 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly ApplicationDbContext _context;
-    private readonly GeocodingService _geoService;
     private static List<GroupMemberModel>? ListMembers;
     private readonly UserManager<AppUserModel> _userManager;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<AppUserModel> userManager, GeocodingService geoService)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<AppUserModel> userManager)
     {
         _logger = logger;
         _context = context;
         _userManager = userManager;
-        _geoService = geoService;
     }
 
     public async Task<IActionResult> Index()
@@ -34,7 +31,7 @@ public class HomeController : Controller
             Pets = await _context.Pets.Include(p => p.PetCategory).ToListAsync()
         };
         var slider = await _context.Sliders.Where(s => s.Status == 1).ToListAsync();
-        ViewBag.Slider = slider;
+        ViewBag.Sliders = slider;
         return View(viewModel);
     }
 
@@ -127,7 +124,7 @@ public class HomeController : Controller
                     MSSV = "AT19N0101",
                     ImageUrl = "shin_heart.jpg",
                     Nickname = "anhnottham",
-                    LinkFB = "https://www.facebook.com/anhnottham",
+                    LinkFB = "https://www.facebook.com/share/1A1qQNHU31/",
                     LinkLinkedin = "https://www.linkedin.com/in/anhnottham/"
                 },
                 new GroupMemberModel
@@ -136,8 +133,8 @@ public class HomeController : Controller
                     MSSV = "AT19N0121",
                     ImageUrl = "shin_uncensored.jpg",
                     Nickname = "anhkhoii",
-                    LinkFB = "https://www.facebook.com/anhkhoii",
-                    LinkLinkedin = "https://www.linkedin.com/in/anhkhoii/"
+                    LinkFB = "https://www.facebook.com/share/1FoMp4Cp8t/",
+                    LinkLinkedin = "https://www.linkedin.com/in/khoi-nguyen-498255260/"
                 },
                 new GroupMemberModel
                 {
@@ -145,8 +142,8 @@ public class HomeController : Controller
                     MSSV = "AT19N0123",
                     ImageUrl = "shin_dev.jpg",
                     Nickname = "hlaan",
-                    LinkFB = "https://www.facebook.com/hlaan.dev",
-                    LinkLinkedin = "https://www.linkedin.com/in/hlaan/"
+                    LinkFB = "https://www.facebook.com/lan.truonghoang.31",
+                    LinkLinkedin = "https://www.linkedin.com/in/trhoanglan04/"
                 },
                 new GroupMemberModel
                 {
@@ -155,7 +152,7 @@ public class HomeController : Controller
                     ImageUrl = "shin_sleep.jpg",
                     Nickname = "TvT",
                     LinkFB = "https://www.facebook.com/tvthieu",
-                    LinkLinkedin = "https://www.linkedin.com/in/truongvanthieu/"
+                    LinkLinkedin = "https://www.linkedin.com/in/tr%C6%B0%C6%A1ng-v%C4%83n-thi%E1%BB%87u-b01a15345/"
                 }
             ];
         return View(ListMembers);
@@ -165,21 +162,6 @@ public class HomeController : Controller
     public async Task<IActionResult> Contact()
     {
         var contact = await _context.Contact.FirstOrDefaultAsync();
-        if (contact != null)
-        {
-            var key = contact.ORS_Key;
-            if (key != null && (contact.ORS_lon == 0 || contact.ORS_lat == 0))
-            {
-                var ORS = await _geoService.GeocodeSearchAsync(contact.Address!);
-                if (ORS != null)
-                {
-                    contact.ORS_lon = ORS.lon;
-                    contact.ORS_lat = ORS.lat;
-                    _context.Update(contact);
-                    await _context.SaveChangesAsync();
-                }
-            }
-        }
         return View(contact); //nullable
     }
 

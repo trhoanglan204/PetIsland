@@ -4,34 +4,107 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="oauth container mt-4">
-    <h4 class="mb-3">Thông tin các thành viên trong nhóm:</h4>
-    <hr />
+<!-- Link Ionicons -->
+<link href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" />
 
-    <div class="table-responsive">
-        <table class="table table-hover table-bordered text-center align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">Ảnh</th>
-                    <th scope="col">MSSV</th>
-                    <th scope="col">Họ và Tên</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (int i = 0; i < Model.Count; i++)
-                {
-                    <tr>
-                        <td>
-                            <img src="~/images/members/@Model[i].ImageUrl"
-                                 alt="Avatar"
-                                 class="rounded-circle"
-                                 style="width: 70px; height: 70px; object-fit: cover;" />
-                        </td>
-                        <td>@Model[i].MSSV</td>
-                        <td>@Model[i].Name</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<style>
+    .team-img {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .team-img img {
+        transition: transform 0.4s ease;
+        width: 100%;
+        height: auto;
+    }
+
+    .team-img:hover img {
+        transform: scale(1.07);
+    }
+
+    .team-social {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .team-img:hover .team-social {
+        opacity: 1;
+    }
+
+    .team-social a {
+        width: 48px;
+        height: 48px;
+        background-color: #ffffff;
+        color: #007bff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        font-size: 20px;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .team-img:hover .team-social a {
+        transform: scale(1);
+    }
+
+    .team-social a:hover {
+        background-color: #007bff;
+        color: #ffffff;
+        transform: scale(1.15);
+    }
+
+    .team-info h5 {
+        margin-top: 15px;
+        font-weight: 700;
+    }
+
+    .team-info p {
+        margin: 0;
+        color: #666;
+    }
+
+    .team-item {
+        padding: 15px;
+    }
+</style>
+
+<!-- Meet Our Team Section -->
+<div class="team my-5">
+    <div class="container text-center">
+        <div class="section-header mb-5">
+            <h1 class="fw-bold">MEET OUR TEAM</h1>
+            <hr class="mx-auto" style="width: 60px; height: 3px; background-color: #ccc; border: none;">
+        </div>
+        <div class="row">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <div class="col-lg-3 col-sm-6 mb-4 team-item">
+                    <div class="team-img position-relative">
+                        <img src="~/images/members/@Model[i].ImageUrl" class="img-fluid" alt="Team Member" />
+                        <div class="team-social d-flex">
+                            <a href="@Model[i].LinkFB" target="_blank"><i class="fa fa-facebook"></i></a>
+                            <a href="@Model[i].LinkLinkedin" target="_blank"><i class="fa fa-linkedin"></i></a>
+                        </div>
+                    </div>
+                    <div class="team-info mt-3">
+                        <h5 class="fw-bold">@Model[i].Name</h5>
+                        <p class="text-muted">@Model[i].MSSV</p>
+                        <p class="text-muted">@Model[i].Nickname</p>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>

@@ -2,12 +2,7 @@
 @{
     ViewData["Title"] = "Liên hệ";
 }
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Contact</title>
-</head>
-<body>
+
 
 <div class="container mt-4">
     <h2>Thông tin liên hệ</h2>
@@ -17,56 +12,17 @@
             </address>
         }
         else{
-            <address>
-                @Model.Name<br />
-                @Model.Address<br />
-                <abbr title="Phone"></abbr> @Model.Phone
-            </address>
-
-        }
-        @if(Model != null && Model.ORS_lat != 0 && Model.ORS_lon != 0){
-            <div id="contact-map" style="height: 400px; width: 100%; border-radius: 10px; border: 1px solid #ccc;"></div>
+	        <div class="col-sm-5 col-md-5">
+		        @Html.Raw(@Model.Map)
+		        <h5>Địa chỉ: @Model.Address</h5>
+	        </div>
+			<div class="col-sm-4">
+				<div class="address">
+					<h5><b>Name : @Model.Name</b></h5>
+					<h5>Email : @Model.Email</h5>
+					<h5>@Model.Phone</h5>
+				</div>
+			</div>
+		
         }
 </div>
-</body>
-
-</html>
-
-@section Scripts {
-    <!-- CSS cho Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- CSS cho MiniMap -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.css" />
-    <!-- JS cho Leaflet -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- JS cho MiniMap -->
-    <script src="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.js"></script>
-
-    @if (Model != null && Model.ORS_lat != 0 && Model.ORS_lon != 0){
-    <script>
-        // Tạo bản đồ chính
-        var mainMap = L.map('contact-map').setView([@Model.ORS_lon, @Model.ORS_lat], 16);
-
-        // Nguồn tile map
-        var mainLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(mainMap);
-
-        // Thêm marker vị trí liên hệ
-        L.marker([@Model.ORS_lon, @Model.ORS_lat])
-            .addTo(mainMap)
-            .bindPopup(@Model.Address)
-            .openPopup();
-
-        // Tạo MiniMap
-        var miniMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-
-        new L.Control.MiniMap(miniMapLayer, {
-            toggleDisplay: true,
-            minimized: false,
-            position: 'bottomright'
-        }).addTo(mainMap);
-    </script>
-    }
-}
-}

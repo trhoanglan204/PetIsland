@@ -4,81 +4,34 @@
     Layout = "_Layout";
 }
 
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Contact</title>
-</head>
-<body>
-    <h3>Contact Info</h3>
-    @if (Model == null){
-        <p>Chưa có thông tin liên hệ.</p>
-        <a class="btn btn-primary btn-sm" asp-action="Edit" asp-controller="Contact">Create new contact</a>
-    }
-    else {
-    <div class="container mt-4">
-        <dl class="row">
-            <dt class="col-sm-3">Tên hiển thị</dt>
-            <dd class="col-sm-9">@Model.Name</dd>
+<h3>Contact Info</h3>
+@if (Model == null){
+    <p>Chưa có thông tin liên hệ.</p>
+    <a class="btn btn-primary btn-sm" asp-action="Edit" asp-controller="Contact">Create new contact</a>
+}
+else {
+<div class="container mt-4">
+    <dl class="row">
+        <dt class="col-sm-3">Tên hiển thị</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
 
-            <dt class="col-sm-3">Email</dt>
-            <dd class="col-sm-9">@Model.Email</dd>
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
 
-            <dt class="col-sm-3">Số điện thoại</dt>
-            <dd class="col-sm-9">@Model.Phone</dd>
+        <dt class="col-sm-3">Số điện thoại</dt>
+        <dd class="col-sm-9">@Model.Phone</dd>
 
-            <dt class="col-sm-3">Địa chỉ</dt>
-            <dd class="col-sm-9">@Html.Raw(@Model.Address)</dd>
+        <dt class="col-sm-3">Địa chỉ</dt>
+        <dd class="col-sm-9">@Model.Address</dd>
 
-            <dt class="col-sm-3">ORS API Key</dt>
-            <dd class="col-sm-9">@Model.ORS_Key</dd>
-        </dl>
+        <dt class="col-sm-3">ORS API Key</dt>
+        <dd class="col-sm-9">@Model.ORS_Key</dd>
 
-        <a class="btn btn-warning btn-sm" asp-action="Edit" asp-controller="Contact">Chỉnh sửa liên hệ</a>
-        <a class="btn btn-warning btn-sm" asp-action="UpdateORSKey" asp-controller="Contact">Chỉnh sửa ORS Key</a>
-        @if(Model != null && Model.ORS_lat != 0 && Model.ORS_lon != 0){
-            <div id="contact-map" style="height: 400px; width: 100%; border-radius: 10px; border: 1px solid #ccc;"></div>
-        }
-    </div>
-    }
-</body>
+        <dt class="col-sm-3">Map</dt>
+        <dd class="col-sm-9">@Html.Raw(@Model.Map)</dd>
+    </dl>
 
-</html>
-
-@section Scripts {
-    <!-- CSS cho Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- CSS cho MiniMap -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.css" />
-    <!-- JS cho Leaflet -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- JS cho MiniMap -->
-    <script src="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.js"></script>
-
-    @if (Model != null && Model.ORS_lat != 0 && Model.ORS_lon != 0){
-    <script>
-        // Tạo bản đồ chính
-        var mainMap = L.map('contact-map').setView([@Model.ORS_lon, @Model.ORS_lat], 16);
-
-        // Nguồn tile map
-        var mainLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(mainMap);
-
-        // Thêm marker vị trí liên hệ
-        L.marker([@Model.ORS_lon, @Model.ORS_lat])
-            .addTo(mainMap)
-            .bindPopup(@Model.Address)
-            .openPopup();
-
-        // Tạo MiniMap
-        var miniMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-
-        new L.Control.MiniMap(miniMapLayer, {
-            toggleDisplay: true,
-            minimized: false,
-            position: 'bottomright'
-        }).addTo(mainMap);
-    </script>
-    }
+    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-controller="Contact">Chỉnh sửa liên hệ</a>
+    <a class="btn btn-warning btn-sm" asp-action="UpdateORSKey" asp-controller="Contact">Chỉnh sửa ORS Key</a>
+</div>
 }

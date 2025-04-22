@@ -32,6 +32,7 @@
   </ItemGroup>
 
     <ItemGroup>
+	    <Folder Include="Views\ViewComponents\" />
 	    <Folder Include="wwwroot\images\members\" />
 	    <Folder Include="wwwroot\images\pets\" />
     </ItemGroup>	

@@ -15,6 +15,9 @@ public class ContactModel
     [Required(ErrorMessage = "Yêu cầu nhập địa chỉ")]
     public string? Address { get; set; }
 
+    [Required(ErrorMessage = "Yêu cầu nhập embeded map")]
+    public string? Map { get; set; }
+
     [Required(ErrorMessage = "Yêu cầu nhập Email")]
     public string? Email { get; set; }
 

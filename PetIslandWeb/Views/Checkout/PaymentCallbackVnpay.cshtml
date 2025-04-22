@@ -1,0 +1,34 @@
+﻿@model PaymentResponseModel
+@{
+    ViewBag.Title = "Kết quả thanh toán";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <div class="text-center">
+        <h2 class="mb-4">KẾT QUẢ THANH TOÁN</h2>
+
+        @if (Model.Success)
+        {
+            <div class="alert alert-success">
+                <h4>🎉 Giao dịch thành công!</h4>
+                <p><strong>Mô tả:</strong> @Model.OrderDescription</p>
+                <p><strong>Mã đơn hàng:</strong> @Model.OrderId</p>
+                <p><strong>Mã giao dịch:</strong> @Model.TransactionId</p>
+                <p><strong>Phương thức thanh toán:</strong> @Model.PaymentMethod</p>
+                <p><strong>PaymentId:</strong> @Model.PaymentId</p>
+                <p><strong>Mã phản hồi VNPAY:</strong> @Model.VnPayResponseCode</p>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                <h4>❌ Giao dịch thất bại</h4>
+                <p><strong>Lý do:</strong> Giao dịch không thành công (mã phản hồi: @Model.VnPayResponseCode)</p>
+                <p><strong>Mã đơn hàng:</strong> @Model.OrderId</p>
+            </div>
+        }
+
+        <a href="/" class="btn btn-primary mt-4">Quay về trang chủ</a>
+    </div>
+</div>
