@@ -7,9 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\ViewComponents\**" />
     <Compile Remove="wwwroot\images\product\**" />
+    <Content Remove="Views\ViewComponents\**" />
     <Content Remove="wwwroot\images\product\**" />
+    <EmbeddedResource Remove="Views\ViewComponents\**" />
     <EmbeddedResource Remove="wwwroot\images\product\**" />
+    <None Remove="Views\ViewComponents\**" />
     <None Remove="wwwroot\images\product\**" />
   </ItemGroup>
 
@@ -32,7 +36,6 @@
   </ItemGroup>
 
     <ItemGroup>
-	    <Folder Include="Views\ViewComponents\" />
 	    <Folder Include="wwwroot\images\members\" />
 	    <Folder Include="wwwroot\images\pets\" />
     </ItemGroup>	
