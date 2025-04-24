@@ -182,8 +182,8 @@ public class SliderController : Controller
             return BadRequest(errorMessage);
         }
     }
-    [Route("Delete")]
 
+    [Route("Delete")]
     public async Task<IActionResult> Delete(int Id)
     {
         SliderModel? slider = await _context.Sliders.FindAsync(Id);

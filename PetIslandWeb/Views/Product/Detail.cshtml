@@ -55,7 +55,7 @@
 						</span>
 						<label style="margin-left: 10px;">Quantity:</label>
 						<input type="number" name="quantity" value="1" min="1" class="form-control d-inline-block" style="width: 70px; text-align: center;" />
-						<button type="button" class="btn btn-warning cart ml-2">
+						<button class="btn btn-warning add-to-cart ml-2">
 							<i class="fa fa-shopping-cart"></i>Add to cart
 						</button>
 					</span>
@@ -302,6 +302,27 @@
 				});
 			}
 		});
+	</script>
+	<script>
+		$('.add-to-cart').click(function () {
+			var Id = $(this).data("product_id");
+			//alert(product_id);
+			$.ajax({
+				type: "POST",
+				url: "@Url.Action("Add", "Cart")",
+				data: { Id: Id }, // Send data to the server
+
+				success: function (result) {
+					// Handle successful update
+					if (result) {
+
+						Swal.fire("Thêm giỏ hàng thành công.");
+					}
+				}
+
+			});
+		});
+
 	</script>
 	<style>
 		#starRating {

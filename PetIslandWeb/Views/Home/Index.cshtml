@@ -20,7 +20,14 @@
 					<div class="single-products">
 						<div class="productinfo text-center">
 							<a asp-action="Detail" asp-controller="Product" asp-route-Id="@item.Id">
-								<img src="~/images/products/@item.Image" alt="@item.Name" width="100px" height="200px" />
+								@if (item.Image == "null.jpg")
+								{
+									<img src="~/images/null.jpg" alt="" width="100px" height="200px" />
+								}
+								else
+								{
+									<img src="~/images/products/@item.Image" alt="@item.Name" width="100px" height="200px" />
+								}
 								<h2>@item.Price.ToString("#,##0 VNĐ")</h2>
 								<p>@item.Name</p>
 								<p>Danh mục: @item.ProductCategory?.Name</p>
@@ -63,7 +70,14 @@
 					<div class="single-products">
 						<div class="productinfo text-center">
 							<a asp-action="Detail" asp-controller="Product" asp-route-Id="@item.Id">
-								<img src="~/images/pets/@item.Image" alt="@item.Name" width="100px" height="200px" />
+								@if (item.Image == "null.jpg")
+								{
+									<img src="~/images/null.jpg" alt="" width="100px" height="200px" />
+								}
+								else
+								{
+									<img src="~/images/pets/@item.Image" alt="@item.Name" width="100px" height="200px" />
+								}
 								<p>@item.Name</p>
 								<p>Giong Loai: @item.PetCategory?.Name</p>
 							</a>

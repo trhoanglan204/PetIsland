@@ -6,6 +6,7 @@ using PetIsland.Models;
 using PetIsland.Utility;
 using PetIslandWeb.Services.Vnpay;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 #pragma warning disable IDE0290
 
@@ -15,9 +16,9 @@ public class CheckoutController : Controller
 {
 
 	private readonly ApplicationDbContext _dataContext;
-	private readonly EmailSender _emailSender;
+	private readonly IEmailSender _emailSender;
 	private readonly IVnPayService _vnPayService;
-	public CheckoutController(EmailSender emailSender, ApplicationDbContext context, IVnPayService vnPayService)
+	public CheckoutController(IEmailSender emailSender, ApplicationDbContext context, IVnPayService vnPayService)
 	{
 		_dataContext = context;
 		_emailSender = emailSender;

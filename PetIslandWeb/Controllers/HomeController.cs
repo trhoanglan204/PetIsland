@@ -93,8 +93,12 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Search(string searchString)
+    public async Task<IActionResult> Search(string? searchString)
     {
+        if (string.IsNullOrEmpty(searchString))
+        {
+            return RedirectToAction("Index");
+        }
         var pets = await _context.Pets
             .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
             .ToListAsync();
