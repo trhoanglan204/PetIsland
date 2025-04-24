@@ -15,24 +15,21 @@
         <div class="col-md-12">
            
             <h5>Thống kê bán hàng</h5>
-            <div class="row">
-                <div class="col-md-4">
-                    <p>Lọc theo ngày tháng</p>
+            <div class="row align-items-end">
+                <div class="col-md-6 d-flex align-items-center">
+                    <label for="datepicker" class="me-2 mb-0">Lọc theo ngày:</label>
                     <form>Ngày: 
-                        
                         <input type="text" class="form-control" id="datepicker">
                         <button type="button" class="btn btn-primary btn-filter-date">Lọc theo ngày</button>
                     </form>
-                    </div>
-                <div class="col-md-4">
-                    <p>Lọc theo</p>
-                    <p>
-                        <select class="form-control filter-date">
-                            <option value="last_month">Tháng trước</option>
-                            <option value="this_month">Tháng này</option>
-                            <option value="all_year">Cả năm</option>
-                        </select>
-                    </p>
+                </div>
+                <div class="col-md-6 d-flex align-items-center">
+                    <label for="filterDate" class="me-2 mb-0">Lọc theo:</label>
+                    <select class="form-control filter-date">
+                        <option value="last_month">Tháng trước</option>
+                        <option value="this_month">Tháng này</option>
+                        <option value="all_year">Cả năm</option>
+                    </select>
                 </div>
             </div>
             

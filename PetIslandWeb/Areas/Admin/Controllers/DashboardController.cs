@@ -24,7 +24,7 @@ public class DashboardController : Controller
         var count_product = _dataContext.Products.Count();
         var count_order = _dataContext.Orders.Count();
         var count_productcategory = _dataContext.ProductCategory.Count();
-        var count_user = _dataContext.Users.Count();
+        var count_user = _dataContext.Users.Where(p => p.Role == SD.Role_Customer).Count();
         ViewBag.CountProduct = count_product;
         ViewBag.CountOrder = count_order;
         ViewBag.CountProductCategory = count_productcategory;

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -11,10 +12,10 @@ using PetIsland.Utility;
 
 namespace PetIslandWeb.Controllers;
 
+[Authorize]
 public class CartController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private static string? CompanyAddress;
     public CartController(ApplicationDbContext context)
     {
         _context = context;
@@ -46,7 +47,7 @@ public class CartController : Controller
         return View(cartVM);
     }
 
-    public async Task<IActionResult> Add(long Id)
+    public async Task<IActionResult> Add(long Id, int? quantity)
     {
         ProductModel? product = await _context.Products.FindAsync(Id);
         List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
@@ -55,20 +56,22 @@ public class CartController : Controller
         {
             return NotFound();
         }
+        int qtyToAdd = quantity ?? 1;
         if (cartItems == null)
         {
-            cart.Add(new CartItemModel(product));
+            cart.Add(new CartItemModel(product, qtyToAdd));
         }
         else
         {
-            cartItems.Quantity += 1;
+            cartItems.Quantity += qtyToAdd;
         }
 
         HttpContext.Session.SetJson("Cart", cart);
 
-        TempData["success"] = "Add Product to cart Sucessfully! ";
+        TempData["success"] = "Add Product to cart Sucessfully!";
         return Redirect(Request.Headers.Referer.ToString());
     }
+
     public IActionResult Decrease(int Id)
     {
         List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
@@ -133,7 +136,6 @@ public class CartController : Controller
 
         return RedirectToAction("Index");
     }
-
     public IActionResult Remove(int Id)
     {
         List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
@@ -150,7 +152,6 @@ public class CartController : Controller
         TempData["success"] = "Remove Product to cart Sucessfully! ";
         return RedirectToAction("Index");
     }
-
     public IActionResult Clear()
     {
         HttpContext.Session.Remove("Cart");

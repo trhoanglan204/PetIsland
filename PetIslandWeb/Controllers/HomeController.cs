@@ -105,16 +105,16 @@ public class HomeController : Controller
         var products = await _context.Products
             .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
             .ToListAsync();
-        if (pets.Count == 0 && products.Count == 0)
-        {
-            return NotFound();
-        }
         var searchResult = new SearchVM
         {
-            Products = products,
-            Pets = pets!,
             SearchKey = searchString
         };
+        if (pets.Count == 0 && products.Count == 0)
+        {
+            return View(searchResult);
+        }
+        searchResult.Products = products;
+        searchResult.Pets = pets;
         return View(searchResult);
     }
 
@@ -129,7 +129,7 @@ public class HomeController : Controller
                     ImageUrl = "shin_heart.jpg",
                     Nickname = "anhnottham",
                     LinkFB = "https://www.facebook.com/share/1A1qQNHU31/",
-                    LinkLinkedin = "https://www.linkedin.com/in/anhnottham/"
+                    LinkLinkedin = "https://www.linkedin.com/in/anh-nguyen-92a56b219/"
                 },
                 new GroupMemberModel
                 {
@@ -155,7 +155,7 @@ public class HomeController : Controller
                     MSSV = "AT19N0138",
                     ImageUrl = "shin_sleep.jpg",
                     Nickname = "TvT",
-                    LinkFB = "https://www.facebook.com/tvthieu",
+                    LinkFB = "https://www.facebook.com/share/1AJHrqmk5a/",
                     LinkLinkedin = "https://www.linkedin.com/in/tr%C6%B0%C6%A1ng-v%C4%83n-thi%E1%BB%87u-b01a15345/"
                 }
             ];
