@@ -1,6 +1,18 @@
 ﻿@model IEnumerable<PetModel>
 @{
     ViewData["title"] = "List Pets";
+
+    var pager = new Paginate();
+
+    int pageNo = 0;
+
+    if (ViewBag.Pager != null)
+    {
+        pager = ViewBag.Pager;
+
+        pageNo = pager.CurrentPage;
+    }
+    int stt = (pager.CurrentPage - 1) * pager.PageSize + 1;
 }
 
 <!DOCTYPE html>
@@ -12,12 +24,13 @@
 </head>
 <body>
     <h3>List Pets</h3>
+    <h4>Total: @ViewBag.Total pets</h4>
 
     <a class="btn btn-primary" asp-action="Create" asp-controller="Pet">Add Pet</a>
     <table class="table" id="myTable">
         <thead>
             <tr>
-                <th>Id</th>
+                <th>STT</th>
                 <th>Pet Name</th>
                 <th>Pet Description</th>
                 <th>Pet Sex</th>
@@ -32,7 +45,7 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Id</td>
+                    <td>@stt</td>
                     <td>@item.Name</td>
                     <td>@Html.Raw(@item.Description)</td>
                     <td>@item.SexDisplay</td>
@@ -54,9 +67,12 @@
                         </form>
                     </td>
                 </tr>
+                stt++;
             }
         </tbody>
     </table>
+    <partial name="_Paging" model="@pager" />
+
 </body>
 
 </html>

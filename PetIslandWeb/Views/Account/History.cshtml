@@ -22,8 +22,10 @@
                 <th>Order Code</th>
                 <th>Shipping Cost</th>
                 <th>Coupon</th>
+                <th>Total</th>
                 <th>UserName</th>
                 <th>Order Status</th>
+                <th>Payment Method</th>
                 <th>Created Date</th>
                 <th>Action</th>
             </tr>
@@ -36,6 +38,7 @@
                     <td>@item.OrderCode</td>
                     <td>@item.ShippingCost.ToString("#,##0 đ")</td>
                     <td>@item.CouponCode</td>
+                    <td>@item.GrandTotal</td>
                     <td>@item.UserName</td>
                     <td>
                         @if (item.Status == 1)
@@ -49,7 +52,17 @@
                         else{
                             <span class="text text-danger">Đã hủy</span>
                             }
-                        </td>
+                    </td>
+                    <td>
+                        @if (item.PaymentMethod == "COD")
+                        {
+							<span class="text text-primary"> @item.PaymentMethod</span>
+						}
+						else
+						{
+							<span class="text text-danger">@item.PaymentMethod</span>
+                        }
+                    </td>
                     <td>@item.CreatedDate.ToString("dd-MM-yyyy")</td>
                     <td>
                         

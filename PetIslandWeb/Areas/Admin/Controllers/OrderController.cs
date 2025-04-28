@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using PetIsland.DataAccess.Data;
 using PetIsland.Utility;
+using PetIsland.Models;
 
 #pragma warning disable IDE0290
 
@@ -21,9 +22,22 @@ public class OrderController : Controller
 
     [HttpGet]
     [Route("Index")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pg = 1)
     {
-        return View(await _context.Orders.OrderByDescending(p => p.Id).ToListAsync());
+        var orderList = await _context.Orders.OrderByDescending(p => p.Id).ToListAsync();
+        const int pageSize = 10;
+        if (pg < 1)
+        {
+            pg = 1;
+        }
+
+        int resCount = orderList.Count;
+        var pager = new Paginate(resCount, pg, pageSize);
+        int recSkip = (pg - 1) * pageSize;
+
+        var data = orderList.Skip(recSkip).Take(pager.PageSize).ToList();
+        ViewBag.Pager = pager;
+        return View(data);
     }
 
     [HttpGet]
@@ -39,6 +53,31 @@ public class OrderController : Controller
         ViewBag.Status = Order.Status;
         return View(DetailsOrder);
     }
+
+    [HttpGet]
+    [Route("PaymentMomoInfo")]
+    public async Task<IActionResult> PaymentMomoInfo(string orderId)
+    {
+        var momoInfo = await _context.MomoInfo.FirstOrDefaultAsync(m => m.OrderId == orderId);
+        if (momoInfo == null)
+        {
+            return NotFound();
+        }
+        return View(momoInfo);
+    }
+
+    [HttpGet]
+    [Route("PaymentVnpayInfo")]
+    public async Task<IActionResult> PaymentVnpayInfo(string orderId)
+    {
+        var vnpayInfo = await _context.VnpayInfo.FirstOrDefaultAsync(m => m.PaymentId == orderId);
+        if (vnpayInfo == null)
+        {
+            return NotFound();
+        }
+        return View(vnpayInfo);
+    }
+
     [HttpPost]
     [Route("UpdateOrder")]
     public async Task<IActionResult> UpdateOrder(string ordercode, int status)

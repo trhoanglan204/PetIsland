@@ -17,10 +17,25 @@ namespace PetIslandWeb.Controllers
 		{
 			_dataContext = context;
         }
-		public async Task<IActionResult> Index()
+		public async Task<IActionResult> Index(int pg = 1)
 		{
 			var products = await _dataContext.Products.ToListAsync();
-			return View(products);
+
+            const int pageSize = 10;
+            if (pg < 1)
+            {
+                pg = 1;
+            }
+
+            int resCount = products.Count;
+            var pager = new Paginate(resCount, pg, pageSize);
+            int recSkip = (pg - 1) * pageSize;
+
+            var data = products.Skip(recSkip).Take(pager.PageSize).ToList();
+            ViewBag.Pager = pager;
+			ViewBag.Total = resCount;
+
+            return View(data);
 		}
 		public async Task<IActionResult> Search(string searchTerm)
 		{
@@ -69,7 +84,10 @@ namespace PetIslandWeb.Controllers
                 .Take(5)
                 .ToListAsync();
 
-			ViewBag.TopPositiveRatings = topPositive;
+			var allRating = await _dataContext.RatingEntries.Where(r => r.ProductId == Id && r.Email != currentUserEmail).ToListAsync();
+			ViewBag.AllRatingExceptUser = allRating;
+
+            ViewBag.TopPositiveRatings = topPositive;
 			ViewBag.TopNegativeRatings = topNegative;
 
 			var userRating = await _dataContext.RatingEntries.FirstOrDefaultAsync(r => r.ProductId == Id && r.Email == currentUserEmail);
@@ -86,7 +104,6 @@ namespace PetIslandWeb.Controllers
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize]
-
 		public async Task<IActionResult> CommentProduct(ProductVM rating, string? returnUrl)
 		{
 			if (ModelState.IsValid)

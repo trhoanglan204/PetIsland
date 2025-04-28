@@ -126,8 +126,11 @@
 							}
 							<form id="reviewForm" autocomplete="off" asp-action="CommentProduct" asp-controller="Product" method="POST">
 								<input type="hidden" asp-for="Product!.Id" value="@Model.Product.Id" />
+								<input type="hidden" asp-for="Product!.Name" value="@Model.Product.Name" />
+								<input type="hidden" asp-for="Product!.Price" value="@Model.Product.Price" />
+								<input type="hidden" asp-for="Product!.Quantity" value="@Model.Product.Quantity" />
 								<input type="hidden" asp-for="UserStar" id="starInput" value="@(userRating?.Star ?? 0)" />
-								<input type="hidden" name="returnUrl" value="@Context.Request.Path + Context.Request.QueryString" />
+								<input type="hidden" name="returnUrl" value="@Context.Request.Path" />
 								<div class="form-group d-flex align-items-center gap-2">
 									<label class="me-2"><b>Rating:</b></label>
 									<div id="starRating" class="@(userRating != null ? "disabled-stars" : "") d-flex">
@@ -160,8 +163,9 @@
 					@{
 						var positiveList = ViewBag.TopPositiveRatings as List<RatingEntryModel>;
 						var negativeList = ViewBag.TopNegativeRatings as List<RatingEntryModel>;
+						var allRating = ViewBag.AllRatingExceptUser;
 					}
-					@if ((positiveList == null || !positiveList.Any()) && (negativeList == null || !negativeList.Any()))
+					@if (allRating == null || ((positiveList == null || !positiveList.Any()) && (negativeList == null || !negativeList.Any())))
 					{
 						<p>Chưa có đánh giá nào cả</p>
 						<p>

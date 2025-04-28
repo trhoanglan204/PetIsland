@@ -7,6 +7,9 @@ using PetIsland.Utility;
 using PetIslandWeb.Services.Vnpay;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using PetIsland.Models.Momo;
+using PetIsland.Models.Vnpay;
+using PetIslandWeb.Services.Momo;
 
 #pragma warning disable IDE0290
 
@@ -18,18 +21,19 @@ public class CheckoutController : Controller
 	private readonly ApplicationDbContext _dataContext;
 	private readonly IEmailSender _emailSender;
 	private readonly IVnPayService _vnPayService;
-	public CheckoutController(IEmailSender emailSender, ApplicationDbContext context, IVnPayService vnPayService)
+    private readonly IMomoService _momoService;
+    public CheckoutController(IEmailSender emailSender, ApplicationDbContext context, IVnPayService vnPayService, IMomoService momoService)
 	{
 		_dataContext = context;
 		_emailSender = emailSender;
 		_vnPayService = vnPayService;
-
-	}
-	public IActionResult Index()
+        _momoService = momoService;
+    }
+    public IActionResult Index()
 	{
 		return View();
 	}
-	public async Task<IActionResult> Checkout()
+	public async Task<IActionResult> Checkout(string? paymentMethod, string? paymentId)
 	{
 		var userEmail = User.FindFirstValue(ClaimTypes.Email);
 		if (userEmail == null)
@@ -50,19 +54,33 @@ public class CheckoutController : Controller
             var shippingPriceCookie = Request.Cookies["ShippingPrice"];
 			decimal shippingPrice = 0;
 
-			if (shippingPriceCookie != null)
+            //Nhận coupon code from cookie
+            var coupon_code = Request.Cookies["CouponTitle"];
+            var couponDiscountPriceCookie = Request.Cookies["CouponDiscountPrice"];
+            decimal couponDiscountPrice = 0;
+
+            if (!string.IsNullOrEmpty(couponDiscountPriceCookie))
+            {
+                couponDiscountPrice = decimal.Parse(couponDiscountPriceCookie);
+            }
+            if (shippingPriceCookie != null)
 			{
 				var shippingPriceJson = shippingPriceCookie;
 				shippingPrice = JsonConvert.DeserializeObject<decimal>(shippingPriceJson);
 			}
-			orderItem.ShippingCost = shippingPrice;
-			//Nhận coupon code
-			var CouponCode = Request.Cookies["CouponTitle"];
-			orderItem.CouponCode = CouponCode;
-			_dataContext.Add(orderItem);
+
+            List<CartItemModel> cartItems = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
+            decimal cartTotal = cartItems.Sum(x => x.Quantity * x.Price);
+
+            orderItem.GrandTotal = cartTotal + shippingPrice - couponDiscountPrice;
+            orderItem.ShippingCost = shippingPrice;
+			orderItem.CouponCode = coupon_code;
+            orderItem.PaymentMethod = paymentMethod + " " + paymentId;
+
+            _dataContext.Add(orderItem);
 			_dataContext.SaveChanges();
+
 			//tạo order detail
-			List<CartItemModel> cartItems = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
 			foreach (var cart in cartItems)
 			{
                 var orderdetail = new OrderDetail
@@ -99,11 +117,58 @@ public class CheckoutController : Controller
 		}
 	}
 
-	[HttpGet]
-	public IActionResult PaymentCallbackVnpay()
+    [HttpGet]
+    public async Task<IActionResult> PaymentCallBack()
+    {
+        var response = _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
+        var requestQuery = HttpContext.Request.Query;
+        if (requestQuery["resultCode"] != 0) //test -> giao dich k thanh cong luu db
+        {
+            var newMomoInsert = new MomoInfoModel
+            {
+                OrderId = requestQuery["orderId"],
+                FullName = User.FindFirstValue(ClaimTypes.Email),
+                Amount = decimal.Parse(requestQuery["Amount"]),
+                OrderInfo = requestQuery["orderInfo"],
+                DatePaid = DateTime.Now,
+            };
+            _dataContext.MomoInfo.Add(newMomoInsert);
+            await _dataContext.SaveChangesAsync();
+            await Checkout("MOMO",requestQuery["orderId"]);
+        }
+        else
+        {
+            TempData["success"] = "Giao dịch Momo không thành công";
+            return RedirectToAction("Index", "Cart");
+        }
+        return View(response);
+    }
+
+    [HttpGet]
+	public async Task<IActionResult> PaymentCallbackVnpay()
 	{
 		var response = _vnPayService.PaymentExecute(Request.Query);
+        if (response.VnPayResponseCode == "00") //test -> giao dich thanh cong luu db
+        {
+            var newVnpayInsert = new VnpayInfoModel
+            {
+                OrderId = response.OrderId,
+                OrderDescription = response.OrderDescription,
+                TransactionId = response.TransactionId,
+                PaymentMethod = response.PaymentMethod,
+                PaymentId = response.PaymentId,
+                DatePaid = DateTime.Now,
+            };
 
-		return Json(response);
+            _dataContext.VnpayInfo.Add(newVnpayInsert);
+            await _dataContext.SaveChangesAsync();
+            await Checkout(response.PaymentMethod, response.PaymentId);
+        }
+        else
+        {
+            TempData["success"] = "Giao dịch Vnpay không thành công";
+            return RedirectToAction("Index", "Cart");
+        }
+        return Json(response);
 	}
 }

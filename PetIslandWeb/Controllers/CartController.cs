@@ -35,13 +35,21 @@ public class CartController : Controller
 
         //Nhận Coupon code từ cookie
         var coupon_code = Request.Cookies["CouponTitle"];
+        var couponDiscountPriceCookie = Request.Cookies["CouponDiscountPrice"];
+        decimal couponDiscountPrice = 0;
+
+        if (!string.IsNullOrEmpty(couponDiscountPriceCookie))
+        {
+            couponDiscountPrice = decimal.Parse(couponDiscountPriceCookie);
+        }
 
         CartItemVM cartVM = new()
         {
             CartItems = cartItems,
             GrandTotal = cartItems.Sum(x => x.Quantity * x.Price),
             ShippingPrice = shippingPrice,
-            CouponCode = coupon_code
+            CouponCode = coupon_code,
+            CouponDiscountPrice = couponDiscountPrice,
         };
 
         return View(cartVM);
@@ -208,6 +216,7 @@ public class CartController : Controller
             //mean no coupon available
             return Ok(new { success = false, message = "Coupon not existed" });
         }
+        decimal discount = validCoupon.Price;
         string couponTitle = validCoupon.Name + " | " + validCoupon.Description;
         TimeSpan remainingTime = validCoupon.DateExpired - DateTime.Now;
         int daysRemaining = remainingTime.Days;
@@ -225,7 +234,8 @@ public class CartController : Controller
                 };
 
                 Response.Cookies.Append("CouponTitle", couponTitle, cookieOptions);
-                return Ok(new { success = true, message = "Coupon applied successfully" });
+                Response.Cookies.Append("CouponDiscountPrice", discount.ToString(), cookieOptions);
+                return Ok(new { success = true, message = "Coupon applied successfully"  });
             }
             catch (Exception ex)
             {
@@ -235,7 +245,7 @@ public class CartController : Controller
             }
         }
         else
-        {
+        { 
             return Ok(new { success = false, message = "Coupon has expired" });
         }
     }
@@ -245,6 +255,15 @@ public class CartController : Controller
     public IActionResult RemoveShippingCookie()
     {
         Response.Cookies.Delete("ShippingPrice");
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    [Route("Cart/RemoveCouponCookie")]
+    public IActionResult RemoveCouponCookie()
+    {
+        Response.Cookies.Delete("CouponTitle");
+        Response.Cookies.Delete("CouponDiscountPrice");
         return Json(new { success = true });
     }
 }

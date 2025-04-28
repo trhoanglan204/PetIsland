@@ -37,7 +37,14 @@
 
     <ItemGroup>
 	    <Folder Include="wwwroot\images\members\" />
+	    <Folder Include="wwwroot\images\brands\" />
+	    <Folder Include="wwwroot\images\blog\" />
 	    <Folder Include="wwwroot\images\pets\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="Pages\Blog\blog-single.cshtml" />
+      <None Include="Pages\Blog\blog.cshtml" />
     </ItemGroup>	
 
 </Project>

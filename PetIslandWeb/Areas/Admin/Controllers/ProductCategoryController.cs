@@ -36,6 +36,7 @@ public class ProductCategoryController : Controller
 
         var data = objCatagoryList.Skip(recSkip).Take(pager.PageSize).ToList();
         ViewBag.Pager = pager;
+        ViewBag.Total = resCount;
 
         return View(data);
     }

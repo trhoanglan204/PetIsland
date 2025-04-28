@@ -26,9 +26,9 @@ public class ShippingController : Controller
         ViewBag.Shippings = shippingList;
         return View();
     }
+
     [HttpPost]
     [Route("StoreShipping")]
-
     public async Task<IActionResult> StoreShipping(ShippingModel shippingModel, string phuong, string quan, string tinh, decimal price)
     {
 

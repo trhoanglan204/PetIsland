@@ -24,6 +24,7 @@ public class CouponController : Controller
     {
         var coupon_list = await _context.Coupons.ToListAsync();
         ViewBag.Coupons = coupon_list;
+        ViewBag.Total = coupon_list.Count;
         return View();
     }
     [Route("Create")]
@@ -53,5 +54,18 @@ public class CouponController : Controller
             string errorMessage = string.Join("\n", errors);
             return BadRequest(errorMessage);
         }
+    }
+
+    public async Task<IActionResult> Delete(int id)
+    {
+        var coupon = await _context.Coupons.FindAsync(id);
+        if (coupon == null)
+        {
+            return NotFound();
+        }
+        _context.Coupons.Remove(coupon);
+        await _context.SaveChangesAsync();
+        TempData["success"] = "Coupon đã được xóa thành công";
+        return RedirectToAction("Index");
     }
 }

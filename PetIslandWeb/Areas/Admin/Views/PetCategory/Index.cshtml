@@ -1,48 +1,58 @@
-﻿@model List<PetCategoryModel>
+﻿@model IEnumerable<PetCategoryModel>
 
-<div class="card shadow border-0 mt-4">
-    <div class="card-header bg-secondary bg-gradient ml-0 py-3">
-        <div class="row">
-            <div class="col-12 text-center">
-                <h2 class="text-white py-2">Category List</h2>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-4">
-        <div class="row pb-3">
-        <div class="col-6">
-        </div>
-        <div class="col-6 text-end">
-            <a asp-controller="PetCategory" asp-action="Create" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i>  Create New Category
-            </a>
-        </div>
-    </div>
+@{
+    ViewData["title"] = "List Category";
 
-        <table class="table table-bordered table-striped">
-            <thead>
+    var pager = new Paginate();
+
+    int pageNo = 0;
+
+    if (ViewBag.Pager != null)
+    {
+        pager = ViewBag.Pager;
+
+        pageNo = pager.CurrentPage;
+    }
+
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+</head>
+<body>
+    <h3>List Category</h3>
+
+    <a class="btn btn-primary" asp-action="Create" asp-controller="Category">Add Category</a>
+
+    <table class="table" id="myTable">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Category Name</th>
+                <th>Category Slug</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
                 <tr>
-                    <th>
-                        Category Name
-                    </th>
-                    <th></th>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td> @item.Slug </td>
+                    <td>
+                        <a class="btn btn-warning btn-sm" asp-action="Edit" asp-controller="PetCategory" asp-route-Id="@item.Id"><i class="bi bi-pencil-square"></i>Edit</a>
+                        <a class="btn btn-danger btn-sm" asp-action="Delete" asp-controller="PetCategory" asp-route-Id="@item.Id"><i class="bi bi-trash-fill"></i>Delete</a>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach (var obj in Model)
-                {
-                    <tr>
-                        <td>@obj.Name</td>
-                        <td>
-                            <div class="w-75 btn-group" role="group">
-                                <a asp-controller="PetCategory" asp-action="Edit" asp-route-id="@obj.Id" class="btn btn-warning btn-sm"><i class="bi bi-pencil-square"></i>Edit</a>
-                                <a asp-controller="PetCategory" asp-action="Delete" asp-route-id="@obj.Id" class="btn btn-danger btn-sm"><i class="bi bi-trash-fill"></i>Delete</a>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+            }
+        </tbody>
+    </table>
+    <partial name="_Paging" model="@pager" />
 
-    </div>
-</div>
+</body>
+</html>

@@ -31,8 +31,8 @@ public class MomoService : IMomoService
 			$"&returnUrl={_options.Value.ReturnUrl}" +
 			$"&notifyUrl={_options.Value.NotifyUrl}" +
 			$"&extraData=";
-		var signature = ComputeHmacSha256(rawData, _options.Value.SecretKey);
-		var client = new RestClient(_options.Value.MomoApiUrl);
+		var signature = ComputeHmacSha256(rawData, _options.Value.SecretKey!);
+		var client = new RestClient(_options.Value.MomoApiUrl!);
 		var request = new RestRequest() { Method = Method.Post };
 		request.AddHeader("Content-Type", "application/json; charset=UTF-8");
 		// Create an object representing the request data

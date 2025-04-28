@@ -76,6 +76,18 @@
             }
             readURL(this);
         });
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $("#imgpreview").attr("src", e.target.result)
+                                     .css({ "max-width": "200px", "max-height": "200px" }); // Tùy chỉnh thêm cho đẹp
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
     </script>
     <script>
         CKEDITOR.replace('Description', {

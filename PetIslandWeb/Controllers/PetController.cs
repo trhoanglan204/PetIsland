@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Drawing.Drawing2D;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
+using PetIsland.Models;
 using PetIsland.Models.ViewModels;
 
 #pragma warning disable IDE0290
@@ -15,9 +17,29 @@ namespace PetIslandWeb.Controllers
 		{
 			_dataContext = context;
 		}
-		public IActionResult Index()
+		public async Task<IActionResult> Index(int pg = 1)
 		{
-			return View();
+            var pets = await _dataContext.Pets
+                .Include(p => p.PetCategory)
+                .ToListAsync();
+
+            const int pageSize = 10;
+
+            if (pg < 1)
+            {
+                pg = 1;
+            }
+            int recsCount = pets.Count;
+
+            var pager = new Paginate(recsCount, pg, pageSize);
+            int recSkip = (pg - 1) * pageSize;
+
+            var data = pets.Skip(recSkip).Take(pager.PageSize).ToList();
+
+            ViewBag.Pager = pager;
+			ViewBag.Total = recsCount;
+
+            return View(data);
 		}
 		public async Task<IActionResult> Search(string searchTerm)
 		{

@@ -3,7 +3,7 @@
 @{
     ViewData["title"] = "List Brand";
 
-    Paginate pager = new Paginate();
+    var pager = new Paginate();
 
     int pageNo = 0;
 
@@ -25,6 +25,7 @@
 </head>
 <body>
     <h3>List Brand</h3>
+    <h4>Total @ViewBag.Total Brand</h4>
 
     <a class="btn btn-primary" asp-action="Create" asp-controller="Brand">Add Brand</a>
 

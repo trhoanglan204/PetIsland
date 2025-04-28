@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Drawing;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
@@ -15,21 +17,20 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 public class BrandController : Controller
 {
     private readonly ApplicationDbContext _dataContext;
-    public BrandController(ApplicationDbContext context)
+    private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly ILogger<BrandController> _logger;
+    public BrandController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment, ILogger<BrandController> logger)
     {
         _dataContext = context;
+        _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
 
-    //[Route("Index")]
-    //public async Task<IActionResult> Index()
-    //{
-    //	return View(await _dataContext.Brands.OrderByDescending(p => p.Id).ToListAsync());
-    //}
-
+    [HttpGet]
     [Route("Index")]
     public async Task<IActionResult> Index(int pg = 1)
     {
-        List<BrandModel> brand = await _dataContext.Brands.ToListAsync();
+        var brand = await _dataContext.Brands.ToListAsync();
 
         const int pageSize = 10;
 
@@ -46,6 +47,7 @@ public class BrandController : Controller
         var data = brand.Skip(recSkip).Take(pager.PageSize).ToList();
 
         ViewBag.Pager = pager;
+        ViewBag.Total = recsCount;
 
         return View(data);
     }
@@ -71,8 +73,33 @@ public class BrandController : Controller
                 ModelState.AddModelError("", "Danh mục đã có trong database");
                 return View(brand);
             }
+            if (brand.ImageUpload != null)
+            {
+                if (brand.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(brand);
+                }
+                string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/brands");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(brand.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "brand_" + brand.Slug;
+                }
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(brand.ImageUpload.FileName);
+                string filePath = Path.Combine(uploadsDir, imageName);
 
-            _dataContext.Add(brand);
+                using var fs = new FileStream(filePath, FileMode.Create);
+                await brand.ImageUpload.CopyToAsync(fs);
+                fs.Close();
+                brand.Image = imageName;
+            }
+            _dataContext.Brands.Add(brand);
             await _dataContext.SaveChangesAsync();
             TempData["success"] = "Thêm thương hiệu thành công";
             return RedirectToAction("Index");
@@ -113,8 +140,55 @@ public class BrandController : Controller
     {
         if (ModelState.IsValid)
         {
-            brand.Slug = brand.Name!.Replace(" ", "-");
-            _dataContext.Update(brand);
+            var existed_brand = _dataContext.Brands.Find(brand.Id); //tìm brand theo id brand
+            if (existed_brand == null)
+            {
+                return NotFound();
+            }
+            brand.Slug = brand.Name.Replace(" ", "-");
+            if (brand.ImageUpload != null)
+            {
+                if (brand.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(brand);
+                }
+                string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/brands");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(brand.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "brand_" + brand.Slug;
+                }
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(brand.ImageUpload.FileName);
+                string filePath = Path.Combine(uploadsDir, imageName);
+
+                using var fs = new FileStream(filePath, FileMode.Create);
+                await brand.ImageUpload.CopyToAsync(fs);
+                fs.Close();
+                var oldImage = Path.Combine(uploadsDir, existed_brand.Image);
+                if (System.IO.File.Exists(oldImage))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldImage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldImage, ex.Message);
+                    }
+                }
+                existed_brand.Image = imageName;
+            }
+            existed_brand.Description = brand.Description;
+            existed_brand.Status = brand.Status;
+            existed_brand.Name = brand.Name;
+
+            _dataContext.Update(existed_brand);
             await _dataContext.SaveChangesAsync();
             TempData["success"] = "Cập nhật thương hiệu thành công";
             return RedirectToAction("Index");
@@ -140,6 +214,19 @@ public class BrandController : Controller
         if (brand == null)
         {
             return NotFound();
+        }
+        string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/pets");
+        string oldfilePath = Path.Combine(uploadsDir, brand.Image);
+        if (System.IO.File.Exists(oldfilePath))
+        {
+            try
+            {
+                System.IO.File.Delete(oldfilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldfilePath, ex.Message);
+            }
         }
         _dataContext.Brands.Remove(brand);
         await _dataContext.SaveChangesAsync();

@@ -166,7 +166,8 @@ public class AccountController : Controller
 
 		var Orders = await _context.Orders
 			.Where(od => od.UserName == userEmail).OrderByDescending(od => od.Id).ToListAsync();
-		ViewBag.UserEmail = userEmail;
+
+        ViewBag.UserEmail = userEmail;
 		return View(Orders);
 	}
 

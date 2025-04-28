@@ -24,6 +24,7 @@ public class PetCategoryController : Controller
     public async Task<IActionResult> Index(int pg = 1)
     {
         var objCatagoryList = await _context.PetCategory.ToListAsync();
+
         const int pageSize = 10;
         if (pg < 1)
         {

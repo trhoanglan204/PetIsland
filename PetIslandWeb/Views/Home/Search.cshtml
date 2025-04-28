@@ -1,14 +1,15 @@
 ﻿@model SearchVM
 
-<h3>Search Results for "@Model.SearchKey"</h3>
-
 @{
+	var searchstring = ViewBag.KeyWord;
     var totalItems = (Model.Pets?.Count() ?? 0) + (Model.Products?.Count() ?? 0);
 }
 
+<h3>Search Results for "@searchstring"</h3>
+
 @if (totalItems == 0)
 {
-	<p>No results found for @Model.SearchKey</p>
+    <p>No results found for @searchstring</p>
 }
 else
 {
@@ -22,7 +23,7 @@ else
         {
             <li>
                 <a href="@Url.Action("Detail","Pet", new { id = pet.Id}, protocol: Context.Request.Scheme)">
-                    <img src="~/image/pets/@pet.Image" alt="@pet.Name" style="width:50px;height:50px;" />
+                    <img src="~/image/pets/@pet.Image" alt="@pet.Name" style="width:100px;height:100px;" />
                     @pet.Name
                 </a>
             </li>
@@ -37,7 +38,7 @@ else
         {
             <li>
                 <a href="@Url.Action("Detail","Pet", new { id = product.Id}, protocol: Context.Request.Scheme)">
-                    <img src="~/images/products/@product.Image" alt="@product.Name" style="width:50px;height:50px;" />
+                    <img src="~/images/products/@product.Image" alt="@product.Name" style="width:100px;height:100px;" />
                     @product.Name
                 </a>
             </li>

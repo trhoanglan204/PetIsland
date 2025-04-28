@@ -7,6 +7,7 @@ using PetIsland.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
 using System.Text.RegularExpressions;
+using System.Drawing.Drawing2D;
 
 #pragma warning disable IDE0290
 
@@ -29,10 +30,25 @@ public class ProductController : Controller
 
     [HttpGet]
     [Route("Index")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pg = 1)
     {
         var objCatagoryList = await _context.Products.OrderByDescending(p => p.Id).Include(c => c.ProductCategory).Include(b => b.Brand).ToListAsync();
-        return View(objCatagoryList);
+        const int pageSize = 10;
+
+        if (pg < 1)
+        {
+            pg = 1;
+        }
+
+        int resCount = objCatagoryList.Count;
+        var pager = new Paginate(resCount, pg, pageSize);
+        int recSkip = (pg - 1) * pageSize;
+
+        var data = objCatagoryList.Skip(recSkip).Take(pager.PageSize).ToList();
+        ViewBag.Pager = pager;
+        ViewBag.Total = resCount;
+
+        return View(data);
     }
 
     [Route("CreateProductQuantity")]

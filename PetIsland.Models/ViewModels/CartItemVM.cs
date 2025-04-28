@@ -8,4 +8,5 @@ public class CartItemVM
 	public decimal ShippingPrice { get; set; }
 
 	public string? CouponCode { get; set; }
+	public decimal CouponDiscountPrice { get; set; }
 }

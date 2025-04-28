@@ -1,8 +1,8 @@
-﻿using System.ComponentModel;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.Models;
+using PetIsland.Models.Momo;
+using PetIsland.Models.Vnpay;
 namespace PetIsland.DataAccess.Data;
 
 #pragma warning disable IDE0290
@@ -34,4 +34,6 @@ public class ApplicationDbContext : IdentityDbContext<AppUserModel>
     public DbSet<RatingEntryModel> RatingEntries { get; set; }
     public DbSet<StatisticalModel> Statisticals { get; set; }
     public DbSet<ContactModel> Contact { get; set; }
+    public DbSet<MomoInfoModel> MomoInfo { get; set; }
+    public DbSet<VnpayInfoModel> VnpayInfo { get; set; }
 }

@@ -6,28 +6,21 @@
 - AT19N0138 Trương Văn Thiệu
 ## Introduce
 - explain abcxyz
+- vi muc dich demo web app, ---> all shared key is free, no required payment, no harmful 
 ## Usage
+- database?
+- VS / VScode
+- connection string
 - ...
+- Momo payment: https://developers.momo.vn/v3/vi/download/
+- VnPay payment: https://sandbox.vnpayment.vn/apis/vnpay-demo/
+## Deploy Server
+- hosting MVC via free hosting website:
+https://www.myasp.net/
+
 ## Drawback & Potential Vulnerability
-- https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js
+- https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js (old version)
+## Further update
+- dynamic calculate shipping cost base on distance 
+> already implement GeoService, use later
 ## Report bug
-
-<details>
-<summary><b>Phan cong nhiem vu</b></summary>
-
-- Khoi
-	+ Thiet ke OurMember
-	+ Tim hieu, dang ki MoMo Service, VnPay API
-	+ thiet ke database (init data -> export ra file)
-
-- HA
-	+ test sqli, xss, ...
-	+ test functional cac chung nang cua webapp
-
-
-- Thieu
-	+ tim hieu cach host MVC tren cac free hosting website
-	+ viet lai README.md hoan chinh + bao cao du an
-
-
-</details>

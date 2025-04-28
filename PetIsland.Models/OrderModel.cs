@@ -8,6 +8,9 @@ public class OrderModel
     public required string OrderCode { get; set; }
     [Precision(18,2)]
     public decimal ShippingCost { get; set; }
+    [Precision(18, 2)]
+    public decimal GrandTotal { get; set; }
+    public string? PaymentMethod { get; set; }
     public string? CouponCode { get; set; }
     public required string UserName { get; set; }
     public DateTime CreatedDate { get; set; }

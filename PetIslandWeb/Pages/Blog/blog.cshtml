@@ -1,0 +1,87 @@
+﻿@page
+@{
+    ViewData["Title"] = "Blog";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Về chúng tôi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1, h2 {
+            color: #0056b3;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Chào mừng bạn đến với Blog của chúng tôi!</h1>
+
+    <img src="~/images/blog/kai.jpg" alt="Nhóm làm việc" />
+
+    <div class="section">
+        <h2>Quá trình hình thành trang web</h2>
+        <p>
+            Trang web này được xây dựng với mong muốn tạo ra một không gian thân thiện, nơi mọi người có thể khám phá và chia sẻ về những sản phẩm thú cưng yêu thích.
+            Ý tưởng bắt đầu vào đầu năm 2025, khi nhóm chúng tôi nhận ra rằng thị trường cần nhiều hơn những nền tảng hỗ trợ việc tìm kiếm và mua bán sản phẩm liên quan đến thú cưng một cách dễ dàng, nhanh chóng.
+        </p>
+        <p>
+            Ban đầu, chúng tôi chỉ có 3 thành viên, mỗi người phụ trách một mảng: lập trình, thiết kế giao diện, và nội dung.
+            Sau nhiều buổi họp online và làm việc không kể ngày đêm, phiên bản đầu tiên của website đã ra đời với đầy đủ tính năng: tìm kiếm, giỏ hàng, đánh giá sản phẩm, và hỗ trợ người dùng thân thiện trên mọi thiết bị.
+        </p>
+
+        <img src="~/images/blog/nhom-anh-4.jpg" alt="Phát triển website" />
+    </div>
+
+    <div class="section">
+        <h2>Về nhóm của chúng tôi</h2>
+        <p>
+            Chúng tôi là một nhóm nhỏ gồm những người trẻ đam mê công nghệ và yêu thích thú cưng:
+        </p>
+        <ul>
+            <li><strong>Hoàng Lân</strong> - Lập trình viên backend, chịu trách nhiệm xây dựng logic và database cho toàn bộ hệ thống.</li>
+            <li><strong>Anh Khôi</strong> - Thiết kế giao diện (UI/UX), mang lại trải nghiệm người dùng đơn giản và dễ sử dụng.</li>
+            <li><strong>Hồng Anh</strong> - Tester, kiểm thử lỗ hổng và report bug.</li>
+            <li><strong>Văn Thiệu</strong> - Quản lý nội dung và marketing, giúp website tiếp cận gần hơn với cộng đồng yêu thú cưng.</li>
+        </ul>
+
+        <img src="~/images/blog/slider_3.png" alt="Nhóm yêu thú cưng" />
+
+        <p>
+            Với phương châm "Đam mê - Sáng tạo - Chân thành", chúng tôi luôn cố gắng cập nhật, cải tiến website mỗi ngày để phục vụ các bạn tốt hơn.
+        </p>
+    </div>
+
+</body>
+</html>

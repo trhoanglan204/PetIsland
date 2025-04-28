@@ -25,10 +25,27 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
+        var products = await _context.Products.Include(p => p.ProductCategory).Include(p => p.Brand).ToListAsync();
+        var pets = await _context.Pets.Include(p => p.PetCategory).ToListAsync();
+        bool morepet = false;
+        bool moreproduct = false;
+        if (pets.Count > 9)
+        {
+            pets = pets.Take(9).ToList();
+            morepet = true;
+
+        }
+        if (products.Count > 9)
+        {
+            products = products.Take(9).ToList();
+            moreproduct = true;
+        }
         var viewModel = new HomeViewModel
         {
-            Products = await _context.Products.Include(p => p.ProductCategory).Include(p => p.Brand).ToListAsync(),
-            Pets = await _context.Pets.Include(p => p.PetCategory).ToListAsync()
+            Products = products,
+            Pets = pets,
+            MorePet = morepet,
+            MoreProduct = moreproduct
         };
         var slider = await _context.Sliders.Where(s => s.Status == 1).ToListAsync();
         ViewBag.Sliders = slider;
@@ -105,16 +122,16 @@ public class HomeController : Controller
         var products = await _context.Products
             .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
             .ToListAsync();
-        var searchResult = new SearchVM
-        {
-            SearchKey = searchString
-        };
+        ViewBag.KeyWord = searchString;
         if (pets.Count == 0 && products.Count == 0)
         {
-            return View(searchResult);
+            return View();
         }
-        searchResult.Products = products;
-        searchResult.Pets = pets;
+        var searchResult = new SearchVM
+        {
+            Products = products,
+            Pets = pets
+        };
         return View(searchResult);
     }
 

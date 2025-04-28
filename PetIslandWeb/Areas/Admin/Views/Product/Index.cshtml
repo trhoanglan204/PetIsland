@@ -1,6 +1,20 @@
 ﻿@model IEnumerable<ProductModel>
+
 @{
     ViewData["title"] = "List Product";
+
+    var pager = new Paginate();
+
+    int pageNo = 0;
+
+    if (ViewBag.Pager != null)
+    {
+        pager = ViewBag.Pager;
+
+        pageNo = pager.CurrentPage;
+    }
+
+    int stt = (pager.CurrentPage - 1) * pager.PageSize + 1;
 }
 
 <!DOCTYPE html>
@@ -12,12 +26,14 @@
 </head>
 <body>
     <h3>List Products</h3>
+    <h4>Total: @ViewBag.Total products</h4>
+
 
     <a class="btn btn-primary" asp-action="Create" asp-controller="Product">Add Product</a>
     <table class="table" id="myTable">
         <thead>
             <tr>
-                <th>Id</th>
+                <th>STT</th>
                 <th>Product Name</th>
                 <th>Quantity</th>
                 <th>Sold out</th>
@@ -35,7 +51,7 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Id</td>
+                    <td>@stt</td>
                     <td>@item.Name</td>
                     <td>
                         @if (@item.Quantity == 0)
@@ -70,9 +86,12 @@
                         </form>
                     </td>
                 </tr>
+                stt++;
             }
         </tbody>
     </table>
+    <partial name="_paging" model="@pager" />
+
 </body>
 
 </html>

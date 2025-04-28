@@ -1,8 +1,74 @@
-﻿
+﻿@model IEnumerable<PetModel>
 @{
     ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var pager = new Paginate();
+
+    int pageNo = 0;
+
+    if (ViewBag.Pager != null)
+    {
+        pager = ViewBag.Pager;
+
+        pageNo = pager.CurrentPage;
+    }
 }
 
-<h1>Index pet</h1>
+<!DOCTYPE html>
 
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+</head>
+<body>
+
+<h3>Danh sách thú cưng</h3>
+
+@if (Model != null && Model.Any())
+{
+    <h4>Total: @ViewBag.Total thú cưng</h4>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Tên</th>
+                <th>Giới tính</th>
+                <th>Mô tả</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var pet in Model)
+            {
+                <tr>
+                    @if (@pet.Image == "null.jpg")
+                    {
+                        <td> <img src="~/images/null.jpg" width="120px" height="150px" /> </td>
+                    }
+                    else
+                    {
+                        <td> <img src="~/images/pets/@pet.Image" width="120px" height="150px" /> </td>
+                    }
+                    <td>@pet.Name</td>
+                    <td>@pet.Sex</td>
+                    <td>@Html.Raw(@pet.Description)</td>
+                    <td>
+                        <a class="btn btn-default" asp-action="Details" asp-route-id="@pet.Id">Chi tiết</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+else
+{
+    <p>Không có thú cưng nào.</p>
+}
+    <partial name="_paging" model="@pager" />
+
+</body>
+</html>

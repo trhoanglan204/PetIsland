@@ -28,10 +28,24 @@ public class PetController : Controller
 
     [HttpGet]
     [Route("Index")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pg = 1)
     {
         var objCatagoryList = await _context.Pets.OrderByDescending(p => p.Id).Include(c => c.PetCategory).ToListAsync();
-        return View(objCatagoryList);
+        const int pageSize = 10;
+        if (pg < 1)
+        {
+            pg = 1;
+        }
+
+        int resCount = objCatagoryList.Count;
+        var pager = new Paginate(resCount, pg, pageSize);
+        int recSkip = (pg - 1) * pageSize;
+
+        var data = objCatagoryList.Skip(recSkip).Take(pager.PageSize).ToList();
+        ViewBag.Pager = pager;
+        ViewBag.Total = resCount;
+
+        return View(data);
     }
 
     [HttpGet]
@@ -74,7 +88,7 @@ public class PetController : Controller
                 string baseName = Path.GetFileNameWithoutExtension(pet.ImageUpload.FileName);
                 if (string.IsNullOrEmpty(baseName))
                 {
-                    baseName = "default";
+                    baseName = "pet_" + pet.Slug;
                 }
                 baseName = baseName.Length > 30 ? baseName[..30] : baseName;
                 string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(pet.ImageUpload.FileName);
@@ -124,7 +138,11 @@ public class PetController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(PetModel pet)
     {
-        var existed_pet = _context.Pets.Find(pet.Id)!; //tìm pet theo id pet
+        var existed_pet = _context.Pets.Find(pet.Id); //tìm pet theo id pet
+        if (existed_pet == null)
+        {
+            return NotFound();
+        }
         ViewBag.Categories = new SelectList(_context.PetCategory, "Id", "Name", pet.PetCategoryId);
 
         if (ModelState.IsValid)
