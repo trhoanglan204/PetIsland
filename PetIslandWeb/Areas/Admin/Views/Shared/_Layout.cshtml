@@ -11,20 +11,18 @@
 <meta name="author" content="">
 <title>@ViewData["title"] - Admin Areas</title>
 <link href="~/css/bootstrap.min.css" rel="stylesheet">
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.min.css" rel="stylesheet">
 
-	<link href="//cdn.datatables.net/2.1.3/css/dataTables.dataTables.min.css" rel="stylesheet">
-	<link href="https://cdn.datatables.net/buttons/3.1.1/css/buttons.dataTables.css" rel="stylesheet">
-	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.0/themes/base/jquery-ui.css">
+<link href="//cdn.datatables.net/2.1.3/css/dataTables.dataTables.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/3.1.1/css/buttons.dataTables.css" rel="stylesheet">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.0/themes/base/jquery-ui.css">
 <link href="~/css/prettyPhoto.css" rel="stylesheet">
 <link href="~/css/price-range.css" rel="stylesheet">
 <link href="~/css/animate.css" rel="stylesheet">
 <link href="~/css/main.css" rel="stylesheet">
 <link href="~/css/responsive.css" rel="stylesheet">
-
-
 <!--[if lt IE 9]>
 <script src="js/html5shiv.js"></script>
 <script src="js/respond.min.js"></script>
@@ -54,18 +52,25 @@
 					</div>
 					<div class="mainmenu pull-left">
 						<ul class="nav navbar-nav collapse navbar-collapse">
-							<li><a asp-action="index" asp-controller="Home">Homepage</a></li>
-							<li><a asp-action="index" asp-controller="Dashboard" class="active">Dashboard</a></li>
-							<li><a asp-action="Index" asp-controller="Slider"> Sliders</a></li>
-							<li><a asp-action="Index" asp-controller="Product"> Products</a></li>
-							<li><a asp-action="Index" asp-controller="Shipping"> Shippings</a></li>
-							<li><a asp-action="Index" asp-controller="Contact"> Contacts</a></li>
-							<li><a asp-action="Index" asp-controller="Category"> Categories</a></li>
-							<li><a asp-action="Index" asp-controller="Brand"> Brands</a></li>
-							<li><a asp-action="Index" asp-controller="User"> Users</a></li>
-							<li><a asp-action="Index" asp-controller="Role"> Roles</a></li>
-							<li><a asp-action="Index" asp-controller="Order"> Orders</a></li>
-							<li><a asp-action="Index" asp-controller="Coupon"> Coupon</a></li>
+							<li><a asp-area="Admin" asp-action="index" asp-controller="Home">Homepage</a></li>
+							@if(User.IsInRole(SD.Role_Admin)){
+								<li><a asp-area="Admin" asp-action="index" asp-controller="Dashboard" class="active">Dashboard</a></li>
+							}
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="Slider"> Sliders</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="Pet"> Pets</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="Product"> Products</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="Shipping"> Shippings</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="Contact"> Contacts</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="ProductCategory"> Product Categories</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="PetCategory"> Pet Categories</a></li>
+							<li><a asp-area="Admin" asp-action="Index" asp-controller="Brand"> Brands</a></li>
+							@if(User.IsInRole(SD.Role_Admin)){
+								<li><a asp-area="Admin" asp-action="Index" asp-controller="User"> Users</a></li>
+								<li><a asp-area="Admin" asp-action="Index" asp-controller="Role"> Roles</a></li>
+								<li><a asp-area="Admin" asp-action="Index" asp-controller="Contact"> Contact</a></li>
+								<li><a asp-area="Admin" asp-action="Index" asp-controller="Coupon"> Coupon</a></li>
+								<li><a asp-area="Admin" asp-action="Index" asp-controller="Order"> Orders</a></li>
+							}
 						</ul>
 					</div>
 				</div>
@@ -89,12 +94,7 @@
 
 	<footer id="footer">
 		<!--Footer-->
-		
-
-		
-
-		
-
+		<partial name="_FooterPartial" />
 	</footer><!--/Footer-->
 
 
@@ -117,6 +117,8 @@
 
 
 	<script src="~/js/main.js"></script>
+	<div id="fb-root"></div>
+	<script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v22.0"></script>
 	<script src="~/backend/js/site.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
 	<script>

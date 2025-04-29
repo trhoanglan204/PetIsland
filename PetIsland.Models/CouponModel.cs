@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace PetIsland.Models
 {
@@ -11,15 +12,17 @@ namespace PetIsland.Models
         [Required(ErrorMessage = "Yêu cầu nhập mô tả coupon")]
         public required string Description { get; set; }
 
-
         [Required(ErrorMessage = "Yêu cầu nhập ngày bắt đầu")]
 
         public required DateTime DateStart { get; set; }
 
         [Required(ErrorMessage = "Yêu cầu nhập ngày kết thúc")]
 
-
         public required DateTime DateExpired { get; set; }
+
+        [Required(ErrorMessage = "Yêu cầu nhập coupon discount price")]
+        [Precision(18,2)]
+        public decimal Price { get; set; }
 
         [Required(ErrorMessage = "Yêu cầu số lượng coupon")]
         public required int Quantity { get; set; }

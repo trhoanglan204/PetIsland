@@ -2,14 +2,10 @@
 @{
     ViewData["title"] = "Create Product";
 }
-
-
     <h3>Create Product</h3>
 
     <div class="col-md-9">
         <form autocomplete="off" asp-action="Create" enctype="multipart/form-data">
-            
-
           <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="form-group">
                     <label>Name</label>
@@ -35,10 +31,23 @@
                 <div class="form-group">
                     <label>Category</label>
                     <select asp-for="ProductCategoryId" class="form-control" asp-items="ViewBag.Categories">
-                         <option>--Choose a category</option>
+                         <option value="">--Choose a category--</option>
                     </select>
                     <span asp-validation-for="ProductCategoryId" class="text-danger"></span>
                 </div>
+                <div class="form-group">
+                    <label>Brand</label>
+                    <select asp-for="BrandId" class="form-control" asp-items="ViewBag.Brands">
+                        <option value="">--No brand selected--</option>  <!-- value rỗng để nullable -->
+                    </select>
+                    <span asp-validation-for="BrandId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input asp-for="Quantity" type="number" min="0" class="form-control" />
+                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                </div>
+
             <div class="form-group">
                 <label>Image</label>
                 <input asp-for="ImageUpload" class="form-control" />
@@ -54,34 +63,61 @@
         </form>
         <a asp-action="Index">Back to list product</a>
     </div>
-    @section Scripts {
-        @{
-    await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        }
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <script>
+        const maxSize = 5 * 1024 * 1024;
         $("#ImageUpload").change(function () {
+            const file = this.files[0];
+
+            if (file){
+                if (file.size > maxSize) {
+                    alert("File ảnh không được lớn hơn 5MB.");
+                    $(this).val("");
+                    return;
+                }
+            }
             readURL(this);
         });
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $("#imgpreview").attr("src", e.target.result)
+                                     .css({ "max-width": "200px", "max-height": "200px" }); // Tùy chỉnh thêm cho đẹp
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
     </script>
+    <script>
+        CKEDITOR.replace('Description', {
+            versionCheck: false
+        });
+    </script>
+    <script>
+        $(".typing-price").on("keyup", function () {
 
-        <script>
-            CKEDITOR.replace('Description');
-        </script>
+            var currency_input = $(this).val(); //29980000
 
-        <script>
-            $(".typing-price").on("keyup", function () {
+            $("#price-convert").html(
 
-                var currency_input = $(this).val(); //29980000
+                new Intl.NumberFormat('vn-VN', { style: 'currency', currency: 'VND' }).format(
+                currency_input,
 
-                $("#price-convert").html(
-
-                    new Intl.NumberFormat('vn-VN', { style: 'currency', currency: 'VND' }).format(
-                    currency_input,
-
-                    )
-                );
-            });
-        </script>
+                )
+            );
+        });
+    </script>
+    <script>
+        document.querySelector('input[name="Quantity"]').addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
     }
 

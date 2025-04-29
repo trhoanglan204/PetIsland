@@ -1,0 +1,121 @@
+﻿@model PetIsland.Models.ViewModels.UserVM
+
+@{
+    ViewData["Title"] = "Cập nhật tài khoản";
+}
+
+<section id="form">
+    <div class="container">
+        <div class="row">
+
+            <div class="col-sm-8 col-sm-offset-2">
+                <div class="signup-form">
+                    <h2>Cập nhật thông tin tài khoản</h2>
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <form asp-action="UpdateAccountInfo" asp-controller="Account" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input asp-for="Username" class="form-control" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input asp-for="Password" class="form-control" disabled />
+                            <span class="text-muted">* Để đổi mật khẩu, vui lòng vào mục "Đổi mật khẩu".</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ảnh đại diện hiện tại</label><br />
+                            @if(Model.Image == "blank_avatar.jpg"){
+                                <img src="~/images/blank_avatar.jpg" alt="Avatar" width="120" height="120" class="img-thumbnail" />
+                            }
+                            else{
+                                <img src="~/images/users/@Model.Image" alt="Avatar" width="120" height="120" class="img-thumbnail" />
+                            }
+                        </div>
+
+                        <div class="form-group">
+                            <label>Thay ảnh đại diện</label>
+                            <input asp-for="ImageUpload" type="file" class="form-control" />
+                            <span asp-validation-for="ImageUpload" class="text-danger"></span>
+                            <img id="imgpreview" class="pt-2" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Họ tên</label>
+                            <input asp-for="Name" class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Địa chỉ</label>
+                            <input asp-for="StreetAddress" class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Thành phố</label>
+                            <input asp-for="City" class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tỉnh / Bang</label>
+                            <input asp-for="State" class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mã bưu điện</label>
+                            <input asp-for="PostalCode" class="form-control" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-default">Huỷ</a>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        const maxSize = 5 * 1024 * 1024;
+        $("#ImageUpload").change(function () {
+            const file = this.files[0];
+
+            if (file){
+                if (file.size > maxSize) {
+                    alert("File ảnh không được lớn hơn 5MB.");
+                    $(this).val("");
+                    return;
+                }
+            }
+            readURL(this);
+        });
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $("#imgpreview").attr("src", e.target.result)
+                                    .css({ "max-width": "200px", "max-height": "200px" }); // chỉnh size hiển thị preview
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}

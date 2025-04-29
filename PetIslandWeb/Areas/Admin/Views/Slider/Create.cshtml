@@ -55,15 +55,38 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <script>
         $("ImageUpload").change(function () {
+            const file = this.files[0];
+
+            if (file){
+                if (file.size > maxSize) {
+                    alert("File ảnh không được lớn hơn 5MB.");
+                    $(this).val("");
+                    return;
+                }
+            }
             readURL(this);
         });
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $("#imgpreview").attr("src", e.target.result)
+                                     .css({ "max-width": "200px", "max-height": "200px" }); // Tùy chỉnh thêm cho đẹp
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
     </script>
 
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <script>
-        CKEDITOR.replace('Description');
+        CKEDITOR.replace('Description', {
+            versionCheck: false
+        });
     </script>
 }
 

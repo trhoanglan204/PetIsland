@@ -7,9 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\ViewComponents\**" />
     <Compile Remove="wwwroot\images\product\**" />
+    <Content Remove="Views\ViewComponents\**" />
     <Content Remove="wwwroot\images\product\**" />
+    <EmbeddedResource Remove="Views\ViewComponents\**" />
     <EmbeddedResource Remove="wwwroot\images\product\**" />
+    <None Remove="Views\ViewComponents\**" />
     <None Remove="wwwroot\images\product\**" />
   </ItemGroup>
 
@@ -25,7 +29,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="RestSharp" Version="112.1.0" />
-    <PackageReference Include="toastr" Version="2.1.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,8 +37,14 @@
 
     <ItemGroup>
 	    <Folder Include="wwwroot\images\members\" />
-	    <Folder Include="wwwroot\images\sliders\" />
+	    <Folder Include="wwwroot\images\brands\" />
+	    <Folder Include="wwwroot\images\blog\" />
 	    <Folder Include="wwwroot\images\pets\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="Pages\Blog\blog-single.cshtml" />
+      <None Include="Pages\Blog\blog.cshtml" />
     </ItemGroup>	
 
 </Project>

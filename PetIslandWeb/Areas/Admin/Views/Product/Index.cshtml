@@ -1,40 +1,97 @@
-﻿@model List<ProductModel>
+﻿@model IEnumerable<ProductModel>
 
-<div class="card shadow border-0 my-4">
-    <div class="card-header bg-secondary bg-gradient ml-0 py-3">
-        <div class="row">
-            <div class="col-12 text-center">
-                <h2 class="text-white py-2">Product List</h2>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-4">
-        <div class="row pb-3">
-        <div class="col-6">
-        </div>
-        <div class="col-6 text-end">
-                <a asp-controller="Product" asp-action="Upsert" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i>  Create New Product
-            </a>
-        </div>
-    </div>
+@{
+    ViewData["title"] = "List Product";
 
-        <table id="tblData" class="table table-bordered table-striped" style="width:100%">
-            <thead>
-                <tr>
-                    <th>Name </th>
-                    <th>Description </th>
-                    <th>OldPrice </th>
-                    <th>Price </th>
-                    <th>CreatedDate </th>
-                    <th> </th>
-                </tr>
-            </thead>
-            
-        </table>
+    var pager = new Paginate();
 
-    </div>
-</div>
-@section Scripts{
-    <script src="~/js/product.js"></script>
+    int pageNo = 0;
+
+    if (ViewBag.Pager != null)
+    {
+        pager = ViewBag.Pager;
+
+        pageNo = pager.CurrentPage;
+    }
+
+    int stt = (pager.CurrentPage - 1) * pager.PageSize + 1;
 }
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+</head>
+<body>
+    <h3>List Products</h3>
+    <h4>Total: @ViewBag.Total products</h4>
+
+
+    <a class="btn btn-primary" asp-action="Create" asp-controller="Product">Add Product</a>
+    <table class="table" id="myTable">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Sold out</th>
+                <th>Product Quantity</th>
+                <th>Product Description</th>
+                <th>Product Price</th>
+                <th>Product Image</th>
+                <th>Product Slug</th>
+                <th>Product Category</th>
+                <th>Product Brand</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@stt</td>
+                    <td>@item.Name</td>
+                    <td>
+                        @if (@item.Quantity == 0)
+                        {
+                            <span class="text text-danger"><b> @item.Quantity</b></span>
+                        }
+                        else
+                        {
+                            <span class="text text-primary"> @item.Quantity</span>
+                        }
+
+                    </td>
+                    <td>@item.SoldOut</td>
+                    <td><a asp-action="CreateProductQuantity" asp-controller="Product" asp-route-Id="@item.Id">Add Quantity?</a></td>
+                    <td>@Html.Raw(@item.Description)</td>
+                    <td>@item.Price.ToString("#,##0 VNĐ")</td>
+                    @if (@item.Image == "null.jpg")
+                    {
+                        <td> <img src="~/images/null.jpg" width="120px" /> </td>
+                    }
+                    else
+                    {
+                        <td> <img src="~/images/products/@item.Image" width="120px" height="150px" /> </td>
+                    }
+                    <td> @item.Slug </td>
+                    <td> @item.ProductCategory?.Name </td>
+                    <td> @item.Brand?.Name </td>
+                    <td>
+                        <a class="btn btn-warning btn-sm" asp-action="Edit" asp-controller="Product" asp-route-Id="@item.Id">Edit</a>
+                        <form asp-action="Delete" asp-controller="Product" asp-route-id="@item.Id" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                stt++;
+            }
+        </tbody>
+    </table>
+    <partial name="_paging" model="@pager" />
+
+</body>
+
+</html>

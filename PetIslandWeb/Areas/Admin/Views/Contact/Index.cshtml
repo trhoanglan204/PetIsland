@@ -1,0 +1,37 @@
+﻿@model ContactModel
+@{
+    ViewData["title"] = "Contact Info";
+    Layout = "_Layout";
+}
+
+<h3>Contact Info</h3>
+@if (Model == null){
+    <p>Chưa có thông tin liên hệ.</p>
+    <a class="btn btn-primary btn-sm" asp-action="Edit" asp-controller="Contact">Create new contact</a>
+}
+else {
+<div class="container mt-4">
+    <dl class="row">
+        <dt class="col-sm-3">Tên hiển thị</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Số điện thoại</dt>
+        <dd class="col-sm-9">@Model.Phone</dd>
+
+        <dt class="col-sm-3">Địa chỉ</dt>
+        <dd class="col-sm-9">@Model.Address</dd>
+
+        <dt class="col-sm-3">ORS API Key</dt>
+        <dd class="col-sm-9">@Model.ORS_Key</dd>
+
+        <dt class="col-sm-3">Map</dt>
+        <dd class="col-sm-9">@Html.Raw(@Model.Map)</dd>
+    </dl>
+
+    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-controller="Contact">Chỉnh sửa liên hệ</a>
+    <a class="btn btn-warning btn-sm" asp-action="UpdateORSKey" asp-controller="Contact">Chỉnh sửa ORS Key</a>
+</div>
+}

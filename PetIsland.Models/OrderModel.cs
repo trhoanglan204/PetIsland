@@ -1,12 +1,18 @@
-﻿namespace PetIsland.Models;
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace PetIsland.Models;
 
 public class OrderModel
 {
     public int Id { get; set; }
-    public string OrderCode { get; set; }
+    public required string OrderCode { get; set; }
+    [Precision(18,2)]
     public decimal ShippingCost { get; set; }
+    [Precision(18, 2)]
+    public decimal GrandTotal { get; set; }
+    public string? PaymentMethod { get; set; }
     public string? CouponCode { get; set; }
-    public string UserName { get; set; }
+    public required string UserName { get; set; }
     public DateTime CreatedDate { get; set; }
     public int Status { get; set; }
 }

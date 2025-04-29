@@ -1,165 +1,136 @@
-using PetIsland.DataAccess.Repository.IRepository;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
-using PetIsland.Utility;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
 
 #pragma warning disable IDE0290
 
-namespace PetIslandWeb.Areas.Customer.Controllers;
-
-[Area("Customer")]
+namespace PetIslandWeb.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ApplicationDbContext _context;
     private static List<GroupMemberModel>? ListMembers;
-    //private readonly UserManager<AppUserModel> _userManager;
+    private readonly UserManager<AppUserModel> _userManager;
 
-    public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<AppUserModel> userManager)
     {
         _logger = logger;
-        _unitOfWork = unitOfWork;
-        //_userManager = userManager;
+        _context = context;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        //var viewModel = new HomeViewModel
-        //{
-        //    Products = await _unitOfWork.Product.GetAllAsync(includeProperties: "ProductCategory,ProductImages"),
-        //    Pets = await _unitOfWork.Pet.GetAllAsync(includeProperties: "PetCategory,PetImages")
-        //};
-        //var slider = (await _unitOfWork.Slider.GetAllAsync(s => s.Status == 1)).ToList();
-        //ViewBag.Slider = slider;
-        //return View(viewModel);
-        return View();
-    }
-
-    public async Task<IActionResult> Details(int productId)
-    {
-        var product = await _unitOfWork.Product.GetAsync(
-            u => u.Id == productId,
-            includeProperties: "Category,ProductImages"
-        );
-        if (product == null)
+        var products = await _context.Products.Include(p => p.ProductCategory).Include(p => p.Brand).ToListAsync();
+        var pets = await _context.Pets.Include(p => p.PetCategory).ToListAsync();
+        bool morepet = false;
+        bool moreproduct = false;
+        if (pets.Count > 9)
         {
-            return NotFound();
+            pets = pets.Take(9).ToList();
+            morepet = true;
+
         }
-        ShoppingCart cart = new()
+        if (products.Count > 9)
         {
-            Product = product,
-            Count = 1,
-            ProductId = productId
-
+            products = products.Take(9).ToList();
+            moreproduct = true;
+        }
+        var viewModel = new HomeViewModel
+        {
+            Products = products,
+            Pets = pets,
+            MorePet = morepet,
+            MoreProduct = moreproduct
         };
-        return View(cart);
+        var slider = await _context.Sliders.Where(s => s.Status == 1).ToListAsync();
+        ViewBag.Sliders = slider;
+        return View(viewModel);
     }
 
     [HttpPost]
-    [Authorize]
-    public async Task<IActionResult> Details(ShoppingCart shoppingCart)
+    public async Task<IActionResult> AddWishlist(int Id)
     {
-        var claimsIdentity = (ClaimsIdentity)User.Identity;
-        var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
-        shoppingCart.ApplicationUserId = userId;
-        ShoppingCart? cartFromDb = await _unitOfWork.ShoppingCart.GetAsync(u => u.ApplicationUserId == userId && u.ProductId == shoppingCart.ProductId);
-        if (cartFromDb != null)
+        WishlistModel? wishlist = await _context.Wishlist.FindAsync(Id);
+        if (wishlist != null)
         {
-            //shopping cart exists
-            cartFromDb.Count += shoppingCart.Count;
-            _unitOfWork.ShoppingCart.Update(cartFromDb);
-            await _unitOfWork.SaveAsync();
+            //ignore
+            return Ok(new { success = true, message = "Add to wishlisht Successfully" });
         }
-        else
+        var user = await _userManager.GetUserAsync(User);
+
+        var wishlistProduct = new WishlistModel
         {
-            //add cart record
-            _unitOfWork.ShoppingCart.Add(shoppingCart);
-            await _unitOfWork.SaveAsync();
-            var cartItems = await _unitOfWork.ShoppingCart.GetAllAsync(u => u.ApplicationUserId == userId);
-            HttpContext.Session.SetInt32(SD.SessionCart,cartItems.Count());
+            ProductId = Id,
+            UserId = user!.Id,
+        };
+
+        _context.Wishlist.Add(wishlistProduct);
+        try
+        {
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true, message = "Add to wishlisht Successfully" });
         }
-        TempData["success"] = "Cart updated successfully";
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> AddWishlist(int Id, WishlistModel wishlistmodel)
-    {
-        //var user = await _userManager.GetUserAsync(User);
-
-        //var wishlistProduct = new WishlistModel
-        //{
-        //    ProductId = Id,
-        //    UserId = user!.Id
-        //};
-
-        //_unitOfWork.Wishlist.Add(wishlistProduct);
-        //try
-        //{
-        //    await _unitOfWork.SaveAsync();
-        //    return Ok(new { success = true, message = "Add to wishlisht Successfully" });
-        //}
-        //catch (Exception)
-        //{
-        //    return StatusCode(500, "An error occurred while adding to wishlist table.");
-        //}
-        return View();
-
+        catch (Exception)
+        {
+            return StatusCode(500, "An error occurred while adding to wishlist table.");
+        }
     }
 
     public async Task<IActionResult> DeleteWishlist(int Id)
     {
-        WishlistModel? wishlist = await _unitOfWork.Wishlist.GetAsync(s => s.Id == Id);
+        WishlistModel? wishlist = await _context.Wishlist.FindAsync(Id);
         if (wishlist == null)
         {
             return NotFound();
         }
 
-        _unitOfWork.Wishlist.Remove(wishlist);
-        await _unitOfWork.SaveAsync();
+        _context.Wishlist.Remove(wishlist);
+        await _context.SaveChangesAsync();
 
-        TempData["success"] = "Wishlist remove successfull";
+        TempData["success"] = "Wishlist remove successfully";
         return RedirectToAction("Wishlist", "Home");
     }
 
     public async Task<IActionResult> Wishlist()
     {
-        var wishlist_product = await _unitOfWork.Wishlist.GetWishlistModels();
+        var wishlist_product = await (from w in _context.Wishlist
+                                      join p in _context.Products on w.ProductId equals p.Id
+                                      select new { Product = p, Wishlists = w })
+                           .ToListAsync();
         return View(wishlist_product);
     }
-
-    public IActionResult Contact()
-    {
-        return View();
-    }
-
     public IActionResult Search()
     {
         return View();
     }
 
     [HttpPost]
-    public async Task<IActionResult> Search(string searchString)
+    public async Task<IActionResult> Search(string? searchString)
     {
-        var pets = await _unitOfWork.Pet.GetAllAsync(u => u.Name.Contains(searchString) || u.Description.Contains(searchString));
-        var products = await _unitOfWork.Product.GetAllAsync(u => u.Name.Contains(searchString) || u.Description.Contains(searchString));
-        if (pets == null && products == null)
+        if (string.IsNullOrEmpty(searchString))
         {
-            return NotFound();
+            return RedirectToAction("Index");
         }
-        var searchResult = new SearchViewModel
+        var pets = await _context.Pets
+            .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
+            .ToListAsync();
+        var products = await _context.Products
+            .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
+            .ToListAsync();
+        ViewBag.KeyWord = searchString;
+        if (pets.Count == 0 && products.Count == 0)
+        {
+            return View();
+        }
+        var searchResult = new SearchVM
         {
             Products = products,
-            Pets = pets!,
-            SearchKey = searchString
+            Pets = pets
         };
         return View(searchResult);
     }
@@ -173,38 +144,62 @@ public class HomeController : Controller
                     Name = "Nguyen Thi Hong Anh",
                     MSSV = "AT19N0101",
                     ImageUrl = "shin_heart.jpg",
-                    Nickname = "anhnottham"
+                    Nickname = "anhnottham",
+                    LinkFB = "https://www.facebook.com/share/1A1qQNHU31/",
+                    LinkLinkedin = "https://www.linkedin.com/in/anh-nguyen-92a56b219/"
                 },
                 new GroupMemberModel
                 {
                     Name = "Nguyen Anh Khoi",
                     MSSV = "AT19N0121",
-                    ImageUrl = "shin_uncencored.jpg",
+                    ImageUrl = "shin_uncensored.jpg",
+                    Nickname = "anhkhoii",
+                    LinkFB = "https://www.facebook.com/share/1FoMp4Cp8t/",
+                    LinkLinkedin = "https://www.linkedin.com/in/khoi-nguyen-498255260/"
                 },
                 new GroupMemberModel
                 {
                     Name = "Truong Hoang Lan",
                     MSSV = "AT19N0123",
                     ImageUrl = "shin_dev.jpg",
-                    Nickname = "hlaan"
+                    Nickname = "hlaan",
+                    LinkFB = "https://www.facebook.com/lan.truonghoang.31",
+                    LinkLinkedin = "https://www.linkedin.com/in/trhoanglan04/"
                 },
                 new GroupMemberModel
                 {
                     Name = "Truong Van Thieu",
                     MSSV = "AT19N0138",
                     ImageUrl = "shin_sleep.jpg",
-                    Nickname = "TvT"
+                    Nickname = "TvT",
+                    LinkFB = "https://www.facebook.com/share/1AJHrqmk5a/",
+                    LinkLinkedin = "https://www.linkedin.com/in/tr%C6%B0%C6%A1ng-v%C4%83n-thi%E1%BB%87u-b01a15345/"
                 }
             ];
         return View(ListMembers);
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error(int statuscode)
+    [HttpGet]
+    public async Task<IActionResult> Contact()
     {
-        if (statuscode == 404)
+        var contact = await _context.Contact.FirstOrDefaultAsync();
+        return View(contact); //nullable
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error(int? statuscode = null)
+    {
+        if (statuscode == StatusCodes.Status404NotFound)
         {
-            return View("NotFound");
+            return View("~/Views/Shared/NotFoundPage.cshtml");
+        }
+        else if (statuscode == StatusCodes.Status403Forbidden)
+        {
+            return View("~/Views/Account/AccessDenied.cshtml");
+        }
+        else if (statuscode == StatusCodes.Status500InternalServerError)
+        {
+            return View("~/Views/Shared/InternalServerError.cshtml");
         }
         else
         {

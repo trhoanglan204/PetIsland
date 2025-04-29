@@ -1,7 +1,6 @@
 ﻿@model IEnumerable<ShippingModel>
 @{
     ViewData["title"] = "Create Shipping";
-    var key = 1;
 }
 
 <style type="text/css">
@@ -21,43 +20,38 @@
 <h3>Create Shipping</h3>
 
 <div class="col-md-9">
-   @*  <form asp-action="Create" enctype="multipart/form-data"> *@
-
-
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="form-group">
             <label>Tỉnh thành phố</label>
-            <select class="css_select" id="tinh" name="tinh" class="form-control" title="Chọn Tỉnh Thành">
+        <select class="css_select form-control" id="tinh" name="tinh" title="Chọn Tỉnh Thành">
                 <option value="0">Tỉnh Thành</option>
             </select>
         </div>
 
         <div class="form-group">
             <label>Quận huyện</label>
-            <select class="css_select" id="quan" name="quan" class="form-control" title="Chọn Quận Huyện">
+            <select class="css_select form-control" id="quan" name="quan" title="Chọn Quận Huyện">
                 <option value="0">Quận Huyện</option>
             </select>
         </div>
 
         <div class="form-group">
             <label>Phường Xã</label>
-            <select class="css_select" id="phuong" name="phuong" class="form-control" title="Chọn Phường Xã">
+            <select class="css_select form-control" id="phuong" name="phuong" title="Chọn Phường Xã">
                 <option value="0">Phường Xã</option>
             </select>
         </div>
 
         <div class="form-group">
             <label>Giá</label>
-            <input id="price-shipping" type="number" placeholder="vd: 20000" min="1" class="form-control" />
-
+            <input id="price-shipping" type="number" pattern="[0-9.,]+" class="form-control typing-price" placeholder="vd: 20000" min="1"/>
+        <span id="price-convert"></span>
         </div>
 
         <div class="form-group">
             <button type="button" class="btn btn-primary btn-add-shipping">Create</button>
         </div>
 
-
- @*    </form> *@
     <h2>Shipping List</h2>
 
     <table class="table table-striped" id="myTable">
@@ -79,7 +73,6 @@
                     <td>@shipping.Ward</td>
                     <td>@shipping.Price.ToString("#,##0 VNĐ")</td>
                     <td>
-                       
                         <a href="@Url.Action("Delete", "Shipping", new { id = shipping.Id })" class="btn btn-danger">Delete</a>
                     </td>
                 </tr>
@@ -113,20 +106,15 @@
                     success: function (result) {
                         // Handle successful update
                         if (result.success) {
-
                             Swal.fire("Thêm vận chuyển thành công. Load lại page để thấy data.");
-                           
                         } else if (result.duplicate) {
-
                             Swal.fire("Dữ liệu trùng lặp.");
 
                         }
                     }
-
                 });
             }
             
-
         })
         $(document).ready(function () {
             //Lấy tỉnh thành
@@ -157,17 +145,27 @@
                                         }
                                     });
                                 });
-
                             }
                         }); //end $.getJson
-
                     });
-
                 }
             });
         });
     </script>
+    <script>
+        $(".typing-price").on("keyup", function () {
 
+            var currency_input = $(this).val(); //29980000
+
+            $("#price-convert").html(
+
+                new Intl.NumberFormat('vn-VN', { style: 'currency', currency: 'VND' }).format(
+                currency_input,
+
+                )
+            );
+        });
+    </script>
 }
 
 

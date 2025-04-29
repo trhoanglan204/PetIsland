@@ -1,20 +1,17 @@
-﻿@model AppUserModel
+﻿@model UserVM
 @{
     ViewData["title"] = "Create User";
 }
-
 
 <h3>Create User</h3>
 
 <div class="col-md-9">
     <form asp-action="Create" enctype="multipart/form-data">
-
-
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="form-group">
-            <label>UserName</label>
-            <input asp-for="UserName" required class="form-control" />
-            <span asp-validation-for="UserName" class="text-danger"></span>
+            <label asp-for="Username" class="control-label"></label>
+            <input asp-for="Username" required class="form-control" />
+            <span asp-validation-for="Username" class="text-danger"></span>
         </div>
 
         <div class="form-group">
@@ -24,28 +21,21 @@
         </div>
 
         <div class="form-group">
-            <label>Phone Number</label>
-            <input asp-for="PhoneNumber" class="form-control" />
-            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-        </div>
-        <div class="form-group">
             <label>Password</label>
-            <input asp-for="PasswordHash" class="form-control" />
-            <span asp-validation-for="PasswordHash" class="text-danger"></span>
+            <input asp-for="Password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 
         <div class="form-group">
             <label>Roles</label>
-            <select asp-for="RoleId" class="form-control" asp-items="ViewBag.Roles">
-               
+            <select class="form-control" name="role" asp-items="ViewBag.Roles">
+                <option value="">-- Chọn vai trò --</option>
             </select>
-            <span asp-validation-for="RoleId" class="text-danger"></span>
         </div>
 
         <div class="form-group">
             <button class="btn btn-primary">Create</button>
         </div>
-
 
     </form>
     <a asp-action="Index">Back to list User</a>

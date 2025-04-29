@@ -1,0 +1,90 @@
+﻿@model ContactModel?
+
+<div class="container">
+        <div class="row">
+            <!-- BÊN TRÁI: Name, Email, Phone, FanPage -->
+            <div class="col-sm-4">
+                @if (Model != null)
+                {
+                    <div class="contact-info">
+                        <h5>@Model.Name</h5>
+                        <h5><strong>Email:</strong> @Model.Email</h5>
+                        <h5><strong>Phone:</strong> @Model.Phone</h5>
+                    </div>
+                    <div class="fb-page mt-2"
+                        data-href="https://www.facebook.com/hocvienkythuatmatma"
+                        data-tabs="message"
+                        data-width="280"
+                        data-height=""
+                        data-small-header="false"
+                        data-adapt-container-width="true"
+                        data-hide-cover="false"
+                        data-show-facepile="true">
+                    <blockquote cite="https://www.facebook.com/hocvienkythuatmatma" class="fb-xfbml-parse-ignore">
+                        <a href="https://www.facebook.com/hocvienkythuatmatma">Học viện Kỹ thuật mật mã - KMA</a>
+                    </blockquote>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">Chưa có thông tin liên hệ.</div>
+                }
+            </div>
+            <!-- GIỮA: Địa chỉ + Map -->
+            @{
+                var mapEmbed = Model?.Map;
+                // Kiểm tra xem có iframe không
+                bool isValidMap = !string.IsNullOrWhiteSpace(mapEmbed) && mapEmbed.Contains("<iframe");
+            }
+            <div class="col-sm-4 text-center">
+                @if (Model != null)
+                {
+                    <h5><strong>Địa chỉ:</strong> @Model.Address</h5>
+
+                    @if (isValidMap)
+                    {
+                        <div class="map-responsive">
+                            @Html.Raw(mapEmbed)
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="alert alert-warning">Chưa có địa chỉ.</div>
+                }
+            </div>
+            <!-- BÊN PHẢI: Bản đồ + Nhận email -->
+            <div class="col-sm-4 text-center">
+                <div class="address mb-3">
+                    <img src="~/images/home/map.png" alt="Map" class="img-fluid" />
+                </div>
+                    <div class="single-widget">
+                    <h5><strong>ABOUT SHOPPER</strong></h5>
+                    <form action="#" class="searchform">
+						<input type="text" placeholder="Your email address" />
+						<button type="submit" class="btn btn-default"><i class="fa fa-arrow-circle-o-right"></i></button>
+						<p>Get the most recent updates from <br />our site and be updated your self...</p>
+                    </form>
+                </div>
+            </div>
+    </div>
+</div>
+
+
+<style>
+    .map-responsive {
+        overflow: hidden;
+        padding-bottom: 56.25%; /* Tỷ lệ khung hình 16:9 */
+        position: relative;
+        height: 0;
+    }
+
+    .map-responsive iframe {
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        border: 0;
+    }
+</style>

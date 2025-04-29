@@ -1,6 +1,4 @@
-﻿using PetIsland.DataAccess.Repository.IRepository;
-using PetIsland.Models;
-using PetIsland.Models.ViewModels;
+﻿using PetIsland.Models;
 using PetIsland.Utility;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc;
@@ -8,39 +6,89 @@ using Microsoft.AspNetCore.Authorization;
 using PetIsland.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
+using System.Text.RegularExpressions;
+using System.Drawing.Drawing2D;
 
 #pragma warning disable IDE0290
 
 namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
-//[Authorize(Roles = SD.Role_Admin)]
 [Route("Admin/Product")]
+[Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Employee}")]
 public class ProductController : Controller
 {
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
-    public ProductController(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment, ApplicationDbContext context)
+    private readonly ILogger<ProductController> _logger;
+    public ProductController(IWebHostEnvironment webHostEnvironment, ApplicationDbContext context, ILogger<ProductController> logger)
     {
-        _unitOfWork = unitOfWork;
         _context = context;
         _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
 
     [HttpGet]
     [Route("Index")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pg = 1)
     {
-        //List<ProductModel> objCatagoryList = (await _unitOfWork.Product.GetAllAsync(includeProperties:"ProductCategory")).ToList();
-        //return View(objCatagoryList);
-        return View(await _context.Products.OrderByDescending(p => p.Id).Include(c => c.ProductCategory).ToListAsync());
+        var objCatagoryList = await _context.Products.OrderByDescending(p => p.Id).Include(c => c.ProductCategory).Include(b => b.Brand).ToListAsync();
+        const int pageSize = 10;
+
+        if (pg < 1)
+        {
+            pg = 1;
+        }
+
+        int resCount = objCatagoryList.Count;
+        var pager = new Paginate(resCount, pg, pageSize);
+        int recSkip = (pg - 1) * pageSize;
+
+        var data = objCatagoryList.Skip(recSkip).Take(pager.PageSize).ToList();
+        ViewBag.Pager = pager;
+        ViewBag.Total = resCount;
+
+        return View(data);
+    }
+
+    [Route("CreateProductQuantity")]
+    [HttpGet]
+    public async Task<IActionResult> CreateProductQuantity(long Id)
+    {
+        var productbyquantity = await _context.ProductQuantities.Where(pq => pq.ProductId == Id).ToListAsync();
+        ViewBag.ProductByQuantity = productbyquantity;
+        ViewBag.ProductId = Id;
+        return View();
+    }
+
+    [Route("UpdateMoreQuantity")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateMoreQuantity(ProductQuantityModel productQuantityModel)
+    {
+        var product = await _context.Products.FindAsync(productQuantityModel.ProductId);
+
+        if (product == null)
+        {
+            return NotFound(); // Handle product not found scenario
+        }
+        product.Quantity += productQuantityModel.Quantity;
+
+        productQuantityModel.Quantity = productQuantityModel.Quantity;
+        productQuantityModel.ProductId = productQuantityModel.ProductId;
+        productQuantityModel.DateTime = DateTime.Now;
+
+        _context.Add(productQuantityModel);
+        await _context.SaveChangesAsync();
+        TempData["success"] = "Thêm số lượng sản phẩm thành công";
+        return RedirectToAction("CreateProductQuantity", "Product", new { Id = productQuantityModel.ProductId });
     }
 
     [Route("Create")]
     public IActionResult Create()
     {
         ViewBag.Categories = new SelectList(_context.ProductCategory, "Id", "Name");
+        ViewBag.Brands = new SelectList(_context.Brands, "Id", "Name");
         return View();
     }
 
@@ -63,26 +111,55 @@ public class ProductController : Controller
 
             if (product.ImageUpload != null)
             {
+                if (product.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(product);
+                }
                 string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/products");
-                string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpload.FileName;
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(product.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "default";
+                }
+                baseName = CommonHelpers.SanitizeFileName(baseName);
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(product.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
-                var fs = new FileStream(filePath, FileMode.Create);
+                using var fs = new FileStream(filePath, FileMode.Create);
                 await product.ImageUpload.CopyToAsync(fs);
                 fs.Close();
                 product.Image = imageName;
             }
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
 
-            _context.Add(product);
+            if (product.Ratings != null)
+            {
+                product.Ratings = null; //reset, just for sure
+            }
+            var rating = new RatingModel
+            {
+                ProductId = product.Id,
+                Star = 0,
+                TotalRated = 0
+            };
+            product.Ratings = rating;
+
+            _context.Ratings.Add(rating);
             await _context.SaveChangesAsync();
             TempData["success"] = "Thêm sản phẩm thành công";
             return RedirectToAction("Index");
-
         }
         else
         {
             TempData["error"] = "Model có một vài thứ đang lỗi";
-            List<string> errors = new List<string>();
+            var errors = new List<string>();
             foreach (var value in ModelState.Values)
             {
                 foreach (var error in value.Errors)
@@ -104,7 +181,7 @@ public class ProductController : Controller
             return NotFound();
         }
         ViewBag.Categories = new SelectList(_context.ProductCategory, "Id", "Name", product.ProductCategoryId);
-
+        ViewBag.Brands = new SelectList(_context.Brands, "Id", "Name", product.BrandId);
         return View(product);
     }
 
@@ -115,6 +192,7 @@ public class ProductController : Controller
     {
         var existed_product = _context.Products.Find(product.Id)!; //tìm sp theo id product
         ViewBag.Categories = new SelectList(_context.ProductCategory, "Id", "Name", product.ProductCategoryId);
+        ViewBag.Brands = new SelectList(_context.Brands, "Id", "Name", product.BrandId);
 
         if (ModelState.IsValid)
         {
@@ -122,26 +200,54 @@ public class ProductController : Controller
 
             if (product.ImageUpload != null)
             {
+                if (product.ImageUpload.Length > 5 * 1024 * 1024) // Giới hạn 5MB
+                {
+                    ModelState.AddModelError("", "File ảnh không được lớn hơn 5MB.");
+                    return View(product);
+                }
                 string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/products");
-                string imageName = Guid.NewGuid().ToString() + "_" + product.ImageUpload.FileName;
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                string baseName = Path.GetFileNameWithoutExtension(product.ImageUpload.FileName);
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    baseName = "product_" + product.Slug;
+                }
+                baseName = CommonHelpers.SanitizeFileName(baseName);
+                baseName = baseName.Length > 30 ? baseName[..30] : baseName;
+                string imageName = baseName + "_" + Guid.NewGuid().ToString() + Path.GetExtension(product.ImageUpload.FileName);
                 string filePath = Path.Combine(uploadsDir, imageName);
 
-                FileStream fs = new FileStream(filePath, FileMode.Create);
+                var fs = new FileStream(filePath, FileMode.Create);
                 await product.ImageUpload.CopyToAsync(fs);
                 fs.Close();
+                var oldImage = Path.Combine(uploadsDir, existed_product.Image);
+                if (System.IO.File.Exists(oldImage))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldImage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldImage, ex.Message);
+                    }
+                }
                 existed_product.Image = imageName;
             }
-
 
             existed_product.Name = product.Name;
             existed_product.Description = product.Description;
             existed_product.Price = product.Price;
             existed_product.ProductCategoryId = product.ProductCategoryId;
+            existed_product.BrandId = product.BrandId;
+            existed_product.CreatedDate = DateTime.Now;
             _context.Update(existed_product);
             await _context.SaveChangesAsync();
             TempData["success"] = "Cập nhật sản phẩm thành công";
             return RedirectToAction("Index");
-
         }
         else
         {
@@ -168,197 +274,22 @@ public class ProductController : Controller
         {
             return NotFound();
         }
-        if (!string.Equals(product.Image, "noname.jpg"))
+        string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/products");
+        string oldfilePath = Path.Combine(uploadsDir, product.Image);
+        if (System.IO.File.Exists(oldfilePath))
         {
-            string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "media/products");
-            string oldfilePath = Path.Combine(uploadsDir, product.Image);
-            if (System.IO.File.Exists(oldfilePath))
+            try
             {
                 System.IO.File.Delete(oldfilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldfilePath, ex.Message);
             }
         }
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         TempData["success"] = "sản phẩm đã được xóa thành công";
         return RedirectToAction("Index");
-    }
-    //Update and Insert  
-    public async Task<IActionResult> Upsert(int? id)
-    {
-        ProductVM productVM = new()
-        {
-            CategoryList = (await _unitOfWork.ProductCategory.GetAllAsync()).Select(u => new SelectListItem
-            {
-                Text = u.Name,
-                Value = u.Id.ToString()
-            }),
-            Product = new ProductModel()
-        };
-        if (id==null || id == 0)
-        {
-            //Create
-            return View(productVM);
-        }
-        else
-        {
-            //Update
-            productVM.Product = (await _unitOfWork.Product.GetAsync(u=>u.Id==id, includeProperties: "ProductImages"))!;
-            return View(productVM);
-        }
-
-    }
-    [HttpPost]
-    public async Task<IActionResult> Upsert(ProductVM productVM, List<IFormFile> files)
-    {
-        //if (!string.IsNullOrEmpty(productVM.Product.ImageUrl))
-        //{
-        //    //Delete Old Image 
-        //    var oldImagePath =
-        //        Path.Combine(wwwRootPath, productVM.Product.ImageUrl.TrimStart('\\'));
-
-        //    if (System.IO.File.Exists(oldImagePath))
-        //    {
-        //        System.IO.File.Delete(oldImagePath);
-        //    }
-
-        //}
-        //using (var fileStream = new FileStream(Path.Combine(productPath, fileName), FileMode.Create))
-        //{
-        //    file.CopyTo(fileStream);
-        //}
-        //productVM.Product.ImageUrl = @"\images\product\" + fileName;
-
-        if (ModelState.IsValid)
-        {
-            if (productVM.Product.Id==0)
-            {
-                _unitOfWork.Product.Add(productVM.Product);
-
-                TempData["success"] = "Product Created Successfully";
-            }
-            else
-            {
-                await _unitOfWork.Product.UpdateAsync(productVM.Product);
-
-                TempData["success"] = "Product Updated Successfully";
-            }
-            await _unitOfWork.SaveAsync();
-            string wwwRootPath = _webHostEnvironment.WebRootPath;
-
-            if (files != null)
-            {
-
-                foreach (IFormFile file in files)
-                {
-                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                    string productPath = @"images\products\product-" + productVM.Product.Id;
-                    string finalPath = Path.Combine(wwwRootPath, productPath);
-
-                    if (!Directory.Exists(finalPath))
-                        Directory.CreateDirectory(finalPath);
-
-                    using (var fileStream = new FileStream(Path.Combine(finalPath, fileName), FileMode.Create))
-                    {
-                        await file.CopyToAsync(fileStream);
-                    }
-
-                    ProductImageModel productImage = new()
-                    {
-                        ImageUrl = @"\" + productPath + @"\" + fileName,
-                        ProductId = productVM.Product.Id,
-                    };
-
-                    if (productVM.Product.ProductImages == null)
-                        productVM.Product.ProductImages = [];
-
-                    productVM.Product.ProductImages.Add(productImage);
-
-                }
-
-                await _unitOfWork.Product.UpdateAsync(productVM.Product);
-                await _unitOfWork.SaveAsync();
-
-            }
-
-            TempData["success"] = "Product created/updated successfully";
-
-            return RedirectToAction("Index");
-        }
-        else
-        {
-            productVM.CategoryList = (await _unitOfWork.ProductCategory.GetAllAsync()).Select(u => new SelectListItem
-            {
-                Text = u.Name,
-                Value = u.Id.ToString()
-            });
-            return View(productVM);
-        }
-    }
-
-    public async Task<IActionResult> DeleteImage(int imageId)
-    {
-        var imageToBeDeleted = await _unitOfWork.ProductImage.GetAsync(u => u.Id == imageId);
-        int productId = imageToBeDeleted.ProductId;
-        if (imageToBeDeleted != null)
-        {
-            if (!string.IsNullOrEmpty(imageToBeDeleted.ImageUrl))
-            {
-                var oldImagePath =
-                               Path.Combine(_webHostEnvironment.WebRootPath,
-                               imageToBeDeleted.ImageUrl.TrimStart('\\'));
-
-                if (System.IO.File.Exists(oldImagePath))
-                {
-                    System.IO.File.Delete(oldImagePath);
-                }
-            }
-
-            _unitOfWork.ProductImage.Remove(imageToBeDeleted);
-            await _unitOfWork.SaveAsync();
-
-            TempData["success"] = "Deleted successfully";
-        }
-
-        return RedirectToAction(nameof(Upsert), new { id = productId });
-    }
-
-
-    #region API CALLS
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        List<ProductModel> objProductList = (await _unitOfWork.Product.GetAllAsync(
-            includeProperties:"Category")).ToList();
-        return Json(new { data = objProductList });
-
-    }
-    [HttpDelete]
-    public async Task<IActionResult> Delete(int? id)
-    {
-        var productToBeDeleted = await _unitOfWork.Product.GetAsync(u=>u.Id == id);
-        if ( productToBeDeleted == null )
-        {
-            return Json(new { success = false, Message = "Error While Deleting" });
-        }
-
-        string productPath = @"images\products\product-" + id;
-        string finalPath = Path.Combine(_webHostEnvironment.WebRootPath, productPath);
-
-        if (Directory.Exists(finalPath))
-        {
-            string[] filePaths = Directory.GetFiles(finalPath);
-            foreach (string filePath in filePaths)
-            {
-                System.IO.File.Delete(filePath);
-            }
-
-            Directory.Delete(finalPath);
-        }
-
-        _unitOfWork.Product.Remove(productToBeDeleted);
-        await _unitOfWork.SaveAsync();
-
-        return Json(new { success = true, message = "Delete Successful" });
-    }
-    #endregion
+    } 
 }

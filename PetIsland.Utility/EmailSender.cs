@@ -35,8 +35,8 @@ public class EmailSender : IEmailSender
 
     public EmailSender(IConfiguration config)
     {
-        SMTP_Email = config.GetValue<string>("GmailSMTP:Email")!;
-        SMTP_Password = config.GetValue<string>("GmailSMTP:AppPassword")!;
+        SMTP_Email = config.GetValue<string>("GmailSMTP:Email") ?? throw new InvalidOperationException("GmailSMTP:Email not configured.");
+        SMTP_Password = config.GetValue<string>("GmailSMTP:AppPassword") ?? throw new InvalidOperationException("GmailSMTP:AppPassword not configured.");
     }
     public Task SendEmailAsync(string email, string subject, string htmlMessage)
     {

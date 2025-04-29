@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Drawing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
-using PetIsland.DataAccess.Repository.IRepository;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
 using PetIsland.Utility;
+using PetIslandWeb.Controllers;
 
 #pragma warning disable IDE0290
 
@@ -21,24 +22,32 @@ public class UserController : Controller
     private readonly UserManager<AppUserModel> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ApplicationDbContext _context;
-    private readonly IUnitOfWork _unitOfWork;
-    public UserController(UserManager<AppUserModel> userManager,ApplicationDbContext context, IUnitOfWork unitOfWork, RoleManager<IdentityRole> roleManager)
+    private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly ILogger<UserController> _logger;
+    public UserController(UserManager<AppUserModel> userManager,ApplicationDbContext context, 
+        RoleManager<IdentityRole> roleManager, IWebHostEnvironment webHostEnvironment, ILogger<UserController> logger)
     {
-        _unitOfWork = unitOfWork;
         _context = context;
         _roleManager = roleManager;
         _userManager = userManager;
+        _webHostEnvironment = webHostEnvironment;
+        _logger = logger;
     }
 
     [HttpGet]
     [Route("Index")]
     public async Task<IActionResult> Index()
     {
-        //var usersWithRoles = await _unitOfWork.ApplicationUser.GetUsersWithRoles();
         var usersWithRoles = await (from u in _context.Users
                                     join ur in _context.UserRoles on u.Id equals ur.UserId
                                     join r in _context.Roles on ur.RoleId equals r.Id
-                                    select new { User = u, RoleName = r.Name })
+                                    select new UserWithRoleVM { User = u, RoleName = r.Name })
+                    .GroupBy(x =>x.User)
+                    .Select(g => new UserWithRoleVM 
+                    { 
+                        User = g.Key,
+                        RoleName = string.Join(", ",g.Select(x=>x.RoleName))
+                    })
                    .ToListAsync();
         return View(usersWithRoles);
     }
@@ -49,7 +58,7 @@ public class UserController : Controller
     {
         var roles = await _roleManager.Roles.ToListAsync();
         ViewBag.Roles = new SelectList(roles, "Id", "Name");
-        return View(new AppUserModel());
+        return View(roles);
     }
 
     [HttpGet]
@@ -119,17 +128,21 @@ public class UserController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Route("Create")]
-    public async Task<IActionResult> Create(AppUserModel user)
+    public async Task<IActionResult> Create(UserVM user, string role)
     {
         if (ModelState.IsValid)
         {
-            var createUserResult = await _userManager.CreateAsync(user, user.PasswordHash); //tạo user
+            var newUser = new AppUserModel
+            {
+                UserName = user.Username,
+                Email = user.Email,
+                Role = SD.Role_Customer,
+                Avatar = user.Image,
+            };
+            var createUserResult = await _userManager.CreateAsync(newUser, user.Password); //tạo user
             if (createUserResult.Succeeded)
             {
-                var createUser = await _userManager.FindByEmailAsync(user.Email); //tìm user dựa vào email
-                var userId = createUser.Id; // lấy user Id
-                var role = _roleManager.FindByIdAsync(user.RoleId); //lấy RoleId
-                var addToRoleResult = await _userManager.AddToRoleAsync(createUser, role.Result.Name);
+                var addToRoleResult = await _userManager.AddToRoleAsync(newUser, role);
                 if (!addToRoleResult.Succeeded)
                 {
                     foreach (var error in createUserResult.Errors)
@@ -151,7 +164,7 @@ public class UserController : Controller
         else
         {
             TempData["error"] = "Model có một vài thứ đang lỗi";
-            List<string> errors = new List<string>();
+            var errors = new List<string>();
             foreach (var value in ModelState.Values)
             {
                 foreach (var error in value.Errors)
@@ -182,95 +195,20 @@ public class UserController : Controller
         {
             return View("Error");
         }
+        string uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "images/users");
+        string oldfilePath = Path.Combine(uploadsDir, user.Avatar!);
+        if (System.IO.File.Exists(oldfilePath))
+        {
+            try
+            {
+                System.IO.File.Delete(oldfilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Không thể xóa file cũ {FilePath}: {Error}", oldfilePath, ex.Message);
+            }
+        }
         TempData["success"] = "User đã được xóa thành công";
         return RedirectToAction("Index");
     }
-
-    public async Task<IActionResult> RoleManagment(string userId)
-    {
-        var RoleVM = new RoleManagmentVM()
-        {
-            ApplicationUser = await _unitOfWork.ApplicationUser.GetAsync(u => u.Id == userId, includeProperties: "Company"),
-            RoleList = _roleManager.Roles.Select(i => new SelectListItem
-            {
-                Text = i.Name,
-                Value = i.Name
-            }),
-        };
-
-        RoleVM.ApplicationUser.Role =
-            _userManager.GetRolesAsync(await _unitOfWork.ApplicationUser
-            .GetAsync(u => u.Id == userId)).GetAwaiter().GetResult().FirstOrDefault();
-
-        return View(RoleVM);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> RoleManagment(RoleManagmentVM roleManagmentVM)
-    {
-
-        string oldRole =
-            _userManager.GetRolesAsync(await _unitOfWork.ApplicationUser
-            .GetAsync(u => u.Id == roleManagmentVM.ApplicationUser.Id))
-            .GetAwaiter().GetResult().FirstOrDefault();
-
-        AppUserModel applicationUser = await _unitOfWork.ApplicationUser.GetAsync(u => u.Id == roleManagmentVM.ApplicationUser.Id);
-
-
-        if (!(roleManagmentVM.ApplicationUser.Role == oldRole))
-        {
-            //a role was updated
-            _unitOfWork.ApplicationUser.Update(applicationUser);
-            await _unitOfWork.SaveAsync();
-
-            _userManager.RemoveFromRoleAsync(applicationUser, oldRole).GetAwaiter().GetResult();
-            _userManager.AddToRoleAsync(applicationUser, roleManagmentVM.ApplicationUser.Role).GetAwaiter().GetResult();
-
-        }
-
-        return RedirectToAction("Index");
-    }
-
-    #region API CALLS
-
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        List<AppUserModel> objUserList = (await _unitOfWork.ApplicationUser.GetAllAsync(includeProperties: "Company")).ToList();
-
-        foreach (var user in objUserList)
-        {
-            user.Role = _userManager.GetRolesAsync(user).GetAwaiter().GetResult().FirstOrDefault();
-        }
-
-        return Json(new { data = objUserList });
-    }
-
-
-    [HttpPost]
-    public async Task<IActionResult> LockUnlock([FromBody] string id)
-    {
-
-        var objFromDb = await _unitOfWork.ApplicationUser.GetAsync(u => u.Id == id);
-        if (objFromDb == null)
-        {
-            return Json(new { success = false, message = "Error while Locking/Unlocking" });
-        }
-
-        if (objFromDb.LockoutEnd != null && objFromDb.LockoutEnd > DateTime.Now)
-        {
-            //user is currently locked and we need to unlock them
-            objFromDb.LockoutEnd = DateTime.Now;
-        }
-        else
-        {
-            objFromDb.LockoutEnd = DateTime.Now.AddYears(1000);
-        }
-        _unitOfWork.ApplicationUser.Update(objFromDb);
-        await _unitOfWork.SaveAsync();
-
-        return Json(new { success = true, message = "Operation Successful" });
-    }
-
-    #endregion
 }

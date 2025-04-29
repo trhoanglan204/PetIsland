@@ -1,0 +1,201 @@
+﻿@model CouponModel
+@{
+    ViewData["Title"] = "Create Coupon";
+}
+<h3>Create Coupon</h3>
+
+<div class="col-md-9">
+    <form autocomplete="off" asp-controller="Coupon" asp-action="Create" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group">
+            <label>Code</label>
+            <input asp-for="Name" class="form-control typing-uppercase" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea asp-for="Description" class="form-control"> </textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Discount Price</label>
+            <input asp-for="Price" pattern="[0-9.,]+" class="form-control typing-price"/> 
+            <span id="price-convert"></span>
+
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Date Start</label>
+            <input asp-for="DateStart" type="date" class="form-control" id="dateStart" />
+            <span asp-validation-for="DateStart" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Date Expired</label>
+            <input asp-for="DateExpired" type="date" class="form-control" id="dateExpired" />
+            <span asp-validation-for="DateExpired" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Quantity</label>
+            <input asp-for="Quantity" min="1" value="1" class="form-control" />
+            <span asp-validation-for="Quantity" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Status</label>
+            <select name="Status" class="form-control">
+                <option value="1">Kích hoạt</option>
+                <option value="0">Ẩn</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <button class="btn btn-primary">Create</button>
+        </div>
+
+
+    </form>
+    <h4>Total: @ViewBag.Total coupons</h4>
+    <table class="table table-striped" id="myTable">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Date Started</th>
+                <th>Date Expired</th>
+                <th>Quantity</th>
+                <th>Active</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var coupon in ViewBag.Coupons)
+            {
+                <tr>
+                    <td>@coupon.Name</td>
+                    <td>@coupon.Description</td>
+                    <td>@coupon.DateStart.ToString("dd-MM-yyyy")</td>
+                    <td>@coupon.DateExpired.ToString("dd-MM-yyyy")</td>
+                    <td>@coupon.Quantity</td>
+                    <td>
+                        @if (@coupon.Status == 1)
+                        {
+                            <select name="Status">
+                                <option selected value="1">Kích hoạt</option>
+                                <option value="0">Ẩn</option>
+                            </select>
+                        }
+                        else
+                        {
+                            <select name="Status">
+                                <option value="1">Kích hoạt</option>
+                                <option selected value="0">Ẩn</option>
+                            </select>
+                        }
+
+                    </td>
+
+                    <td>
+                        @{
+                            var now = DateTime.Now;
+                        }
+                        @if (coupon.DateStart > now)
+                        {
+                            <span class="text text-warning">Chưa bắt đầu</span> <!-- hoặc "Not started yet" -->
+                        }
+                        else if (coupon.DateExpired < now)
+                        {
+                            <span class="text text-danger">Expired</span>
+                        }
+                        else
+                        {
+                            TimeSpan remainingTime = coupon.DateExpired - now;
+                            int daysRemaining = remainingTime.Days;
+                            @if (daysRemaining == 0)
+                            {
+                                <span class="text text-danger">Today</span>
+                            }
+                            else
+                            {
+                                <span class="text text-success">@daysRemaining days left</span>
+                            }
+                        }
+                    </td>
+                    <td>
+                        <a class="btn btn-danger btn-sm" asp-action="Delete" asp-controller="Coupon" asp-route-Id="@coupon.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(".typing-price").on("keyup", function () {
+
+            var currency_input = $(this).val().replace(",","."); //29980000
+            var number = parseFloat(currency_input);
+            if (!isNaN(number)) {
+                if (number > 0 && number < 1) {
+                    // Hiển thị phần trăm
+                    $("#price-convert").html((number * 100).toFixed(0) + "%");
+                } else {
+                    // Hiển thị tiền VND
+                    $("#price-convert").html(
+                        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number)
+                    );
+                }
+            } else {
+                $("#price-convert").html("");
+            }
+        });
+    </script>
+    <script>
+        document.querySelector('input[name="Quantity"]').addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            $(".typing-uppercase").on("input", function () {
+                this.value = this.value.toUpperCase();
+                this.value = this.value.replace(/[^A-Z0-9]/g, '');
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            $("#dateStart").on("change", function () {
+                var startDate = $(this).val(); // lấy ngày start
+                if (startDate) {
+                    // Set min cho dateExpired
+                    $("#dateExpired").attr("min", startDate);
+
+                    // Nếu ngày Expired đang nhỏ hơn ngày Start thì reset
+                    var expiredDate = $("#dateExpired").val();
+                    if (expiredDate && expiredDate < startDate) {
+                        $("#dateExpired").val(''); // xóa chọn
+                    }
+                }
+            });
+        });
+    </script>
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace('Description', {
+            versionCheck: false
+        });
+    </script>
+}

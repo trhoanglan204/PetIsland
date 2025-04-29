@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
 using PetIsland.Models;
+using PetIsland.Utility;
 
 #pragma warning disable IDE0290
 
@@ -10,7 +11,7 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Route("Admin/Shipping")]
-[Authorize(Roles = "Publisher,Author,Admin")]
+[Authorize(Roles = $"{SD.Role_Employee},{SD.Role_Admin}")]
 public class ShippingController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -25,9 +26,9 @@ public class ShippingController : Controller
         ViewBag.Shippings = shippingList;
         return View();
     }
+
     [HttpPost]
     [Route("StoreShipping")]
-
     public async Task<IActionResult> StoreShipping(ShippingModel shippingModel, string phuong, string quan, string tinh, decimal price)
     {
 
@@ -58,7 +59,11 @@ public class ShippingController : Controller
     }
     public async Task<IActionResult> Delete(int Id)
     {
-        ShippingModel shipping = await _context.Shippings.FindAsync(Id);
+        ShippingModel? shipping = await _context.Shippings.FindAsync(Id);
+        if (shipping == null)
+        {
+            return NotFound();
+        }
 
         _context.Shippings.Remove(shipping);
         await _context.SaveChangesAsync();

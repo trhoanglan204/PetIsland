@@ -1,0 +1,41 @@
+﻿@model IEnumerable<PetModel>
+@{
+    ViewData["Title"] = @ViewBag.Keyword;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="col-sm-3">
+    <partial name="_SidebarPartial" />
+</div>
+
+<div class="col-sm-9 padding-right">
+    <div class="features_items">
+        <!--features_items-->
+        <h2 class="title text-center">@ViewBag.Keyword</h2>
+
+        @foreach (var item in Model)
+        {
+            <div class="col-sm-4">
+                <div class="product-image-wrapper">
+
+                    <a>
+                        <div class="single-products">
+                            <div class="productinfo text-center">
+                                <img src="~/images/pets/@item.Image" alt="@item.Name" width="100px" height="200px" />
+                                <p>@item.Name</p>
+                                <p>Giống: @item.PetCategory.Name</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        }
+
+    </div><!--features_items-->
+
+
+
+</div>
+
+
+

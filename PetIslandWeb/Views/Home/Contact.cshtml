@@ -1,6 +1,28 @@
-﻿<address>
-    Phan hieu Hoc vien Ki thuat Mat ma<br />
-    17A Cong Hoa Quan Tan Binh, Thanh pho Ho Chi Minh<br />
-    <abbr title="Phone">P:</abbr>
-    028 123456789
-</address>
+﻿@model ContactModel
+@{
+    ViewData["Title"] = "Liên hệ";
+}
+
+
+<div class="container mt-4">
+    <h2>Thông tin liên hệ</h2>
+        @if(Model == null){
+            <address>
+                Chua them thong tin
+            </address>
+        }
+        else{
+	        <div class="col-sm-5 col-md-5">
+		        @Html.Raw(@Model.Map)
+		        <h5>Địa chỉ: @Model.Address</h5>
+	        </div>
+			<div class="col-sm-4">
+				<div class="address" style="float: right; margin-right: 20px;">
+					<h5><b>Name : @Model.Name</b></h5>
+					<h5>Email : @Model.Email</h5>
+					<h5>@Model.Phone</h5>
+				</div>
+			</div>
+		
+        }
+</div>

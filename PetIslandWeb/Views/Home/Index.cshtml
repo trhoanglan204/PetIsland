@@ -1,106 +1,169 @@
 ﻿@model HomeViewModel
+@{
+    ViewData["Title"] = "Product from PetIsland";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
-<div class="row pb-3">
-    @if(Model != null){
-        @if (Model.Products != null)
-        {
-            @foreach (var product in Model.Products)
-            {
-                <div class="col-lg-3 col-sm-6">
-                    <div class="row p-2">
-                        <div class="col-12 p-1">
-                            <div class="card border-0 p-3 shadow  border-top border-5 rounded">
-
-                                @if (product.ProductImages != null && product.ProductImages.Count() > 0)
-                                {
-                                    <img src="@product.ProductImages.FirstOrDefault().ImageUrl" class="card-img-top rounded" />
-                                }
-                                else
-                                {
-                                    <img src="https://placehold.co/500x600/png" class="card-img-top rounded" />
-                                }
-
-                                <div class="card-body pb-0">
-                                    <div class="pl-1">
-                                        <p class="card-title h5 text-dark opacity-75 text-uppercase text-center">@product.Name</p>
-                                        <p class="card-title text-warning text-center">by <b>@product.Description</b></p>
-                                    </div>
-                                    <div class="pl-1">
-                                        <p class="text-dark text-opacity-75 text-center mb-0">
-                                            List Price:
-                                            <span class="text-decoration-line-through">
-                                                @product.OldPrice.ToString("c")
-                                            </span>
-                                        </p>
-                                    </div>
-                                    <div class="pl-1">
-                                        <p class="text-dark text-opacity-75 text-center">
-                                            As low as:
-                                            <span>
-                                                @product.Price.ToString("c")
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <a asp-action="Details"
-                                       asp-route-productId="@product.Id"
-                                       class="btn btn-primary bg-gradient border-0 form-control">
-                                        Details
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        }
-        @if (Model.Pets != null)
-        {
-            @foreach (var pet in Model.Pets)
-            {
-                <div class="col-lg-3 col-sm-6">
-                    <div class="row p-2">
-                        <div class="col-12 p-1">
-                            <div class="card border-0 p-3 shadow  border-top border-5 rounded">
-
-                                @if (pet.PetImages != null && pet.PetImages.Count() > 0)
-                                {
-                                    <img src="@pet.PetImages.FirstOrDefault().ImageUrl" class="card-img-top rounded" />
-                                }
-                                else
-                                {
-                                    <img src="https://placehold.co/500x600/png" class="card-img-top rounded" />
-                                }
-
-                                <div class="card-body pb-0">
-                                    <div class="pl-1">
-                                        <p class="card-title h5 text-dark opacity-75 text-uppercase text-center">@pet.Name</p>
-                                    </div>
-                                    <div class="pl-1">
-                                        <p class="text-dark text-opacity-75 text-center">
-                                            As low as:
-                                            <span>
-                                                @pet.Description
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <a asp-action="Details"
-                                       asp-route-productId="@pet.Id"
-                                       class="btn btn-primary bg-gradient border-0 form-control">
-                                        Details
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        }
-    }
-    else{
-        <h2> test</h2>
-    }
+<partial name="_SliderPartial" />
+<div class="col-sm-3">
+    <partial name="_SidebarPartial" />
 </div>
+
+<div class="col-sm-9 padding-right">
+	<div class="features_items">
+		<!--features_items-->
+		<h2 class="title text-center">Features Product</h2>
+		@if (Model.Products != null){
+			@foreach (var item in Model.Products)
+			{
+				<div class="col-sm-4">
+					<div class="product-image-wrapper">
+						<div class="single-products">
+							<div class="productinfo text-center">
+								<a asp-action="Detail" asp-controller="Product" asp-route-Id="@item.Id">
+									@if (item.Image == "null.jpg")
+									{
+										<img src="~/images/null.jpg" alt="" width="100px" height="200px" />
+									}
+									else
+									{
+										<img src="~/images/products/@item.Image" alt="@item.Name" width="100px" height="200px" />
+									}
+									<h2>@item.Price.ToString("#,##0 VNĐ")</h2>
+									<p>@item.Name</p>
+									<p>Danh mục: @item.ProductCategory?.Name</p>
+									<p>Thương hiệu: @item.Brand?.Name</p>
+								</a>
+								@if (@item.Quantity == 0)
+								{
+									<button type="button" class="btn btn-default"><i class="fa fa-shopping-cart"></i>Hết hàng</button>
+								}
+								else
+								{
+									<button class="btn btn-default add-to-cart" data-product_id="@item.Id"><i class="fa fa-shopping-cart"></i>Thêm giỏ hàng</button>
+								}
+							</div>
+						</div>
+						<div class="choose text-center">
+							@if (User.Identity?.IsAuthenticated ?? false)
+							{
+								<button class="btn btn-default add-btn-wishlist" data-product_id="@item.Id">
+									<i class="fa fa-heart" style="color: red;"></i> Thêm Wishlist
+								</button>
+							}
+						</div>
+					</div>
+				</div>
+			}
+			@if (Model.MoreProduct) 
+			{
+				<h5 class="title text-center">
+					<a asp-action="Index" asp-controller="Product" style="font-weight:bold; text-decoration:none;">
+						&gt;&gt;&gt;&gt;&gt;&gt;Xem thêm&lt;&lt;&lt;&lt;&lt;&lt;
+					</a>
+				</h5>
+			}
+		}
+		else{
+			<h5 class="title text-center">Empty</h5>
+		}
+
+
+	</div><!--features_items-->
+</div>
+
+<div class="col-sm-9 padding-right">
+	<div class="features_items">
+		<!--features_items-->
+		<h2 class="title text-center">Features Pet</h2>
+		@if (Model.Pets != null){
+			@foreach (var item in Model.Pets)
+			{
+				<div class="col-sm-4">
+					<div class="product-image-wrapper">
+						<div class="single-products">
+							<div class="productinfo text-center">
+								<a asp-action="Detail" asp-controller="Pet" asp-route-Id="@item.Id">
+									@if (item.Image == "null.jpg")
+									{
+										<img src="~/images/null.jpg" alt="" width="100px" height="200px" />
+									}
+									else
+									{
+										<img src="~/images/pets/@item.Image" alt="@item.Name" width="100px" height="200px" />
+									}
+									<p>@item.Name</p>
+									<p>Giong Loai: @item.PetCategory?.Name</p>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+			@if (Model.MorePet)
+			{
+				<h5 class="title text-center">
+					<a asp-action="Index" asp-controller="Pet" style="font-weight:bold; text-decoration:none;">
+						&gt;&gt;&gt;&gt;&gt;&gt;Xem thêm&lt;&lt;&lt;&lt;&lt;&lt;
+					</a>
+				</h5>
+			}
+		}
+		else{
+			<h5 class="title text-center">Empty</h5>
+		}
+
+
+	</div><!--features_items-->
+</div>
+@section Scripts {
+	<script>
+		$('.add-to-cart').click(function () {
+			var Id = $(this).data("product_id");
+
+			//alert(product_id);
+
+			$.ajax({
+				type: "POST",
+				url: "@Url.Action("Add", "Cart")",
+				data: { Id: Id }, // Send data to the server
+
+				success: function (result) {
+					// Handle successful update
+					if (result) {
+
+						Swal.fire("Thêm giỏ hàng thành công.");
+					}
+				}
+
+			});
+		});
+
+	</script>
+	<!---Add to Wishlish Script--->
+	<script>
+		$(document).ready(function () {
+			$('.add-btn-wishlist').click(function () {
+				var Id = $(this).data("product_id");
+
+				//alert(product_id);
+
+				$.ajax({
+					type: "POST",
+					url: "@Url.Action("AddWishlist", "Home")",
+					data: { Id: Id }, // Send data to the server
+
+					success: function (result) {
+						// Handle successful update
+						if (result) {
+
+							Swal.fire("Thêm yêu thích sản phẩm thành công.");
+						}
+					}
+
+				});
+			});
+		});
+	</script>
+	<!---//Add to Wishlish Script--->
+}

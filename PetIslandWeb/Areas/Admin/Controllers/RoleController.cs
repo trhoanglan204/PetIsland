@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetIsland.DataAccess.Data;
+using PetIsland.Utility;
 
 #pragma warning disable IDE0290
 
@@ -10,7 +11,7 @@ namespace PetIslandWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Route("Admin/Role")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = SD.Role_Admin)]
 public class RoleController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -81,12 +82,12 @@ public class RoleController : Controller
     [Route("Create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(IdentityRole model)
+    public IActionResult Create(IdentityRole model)
     {
         //avoid duplicate role
-        if (!_roleManager.RoleExistsAsync(model.Name).GetAwaiter().GetResult())
+        if (!_roleManager.RoleExistsAsync(model.Name!).GetAwaiter().GetResult())
         {
-            _roleManager.CreateAsync(new IdentityRole(model.Name)).GetAwaiter().GetResult();
+            _roleManager.CreateAsync(new IdentityRole(model.Name!)).GetAwaiter().GetResult();
         }
         return Redirect("Index");
     }

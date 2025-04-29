@@ -1,0 +1,106 @@
+﻿@model IEnumerable<ProductModel>
+
+@{
+    ViewData["Title"] = "Danh sách sản phẩm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var pager = new Paginate();
+
+    int pageNo = 0;
+
+    if (ViewBag.Pager != null)
+    {
+        pager = ViewBag.Pager;
+
+        pageNo = pager.CurrentPage;
+    }
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+</head>
+<body>
+
+<h3>Danh sách sản phẩm</h3>
+
+@if (Model != null && Model.Any())
+{
+    <h4>Total: @ViewBag.Total sản phẩm</h4>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Tên</th>
+                <th>Giá</th>
+                <th>Mô tả</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+            {
+                <tr>
+                    @if (@product.Image == "null.jpg")
+                    {
+                        <td> <img src="~/images/null.jpg" width="120px" height="150px" /> </td>
+                    }
+                    else
+                    {
+                        <td> <img src="~/images/products/@product.Image" width="120px" height="150px" /> </td>
+                    }
+                    <td>@product.Name</td>
+                    <td>@product.Price</td>
+                    <td>@Html.Raw(@product.Description)</td>
+                    <td>
+                        <a class="btn btn-default" asp-action="Detail" asp-route-id="@product.Id">Chi tiết</a>
+                        <button class="btn btn-warning add-to-cart ml-2">
+							<i class="fa fa-shopping-cart"></i>Add to cart
+						</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+else
+{
+    <p>Không có sản phẩm nào.</p>
+}
+    <partial name="_paging" model="@pager" />
+
+</body>
+</html>
+
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+<script>
+    $('.add-to-cart').click(function () {
+        var Id = $(this).data("product_id");
+        //alert(product_id);
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("Add", "Cart")",
+            data: { Id: Id }, // Send data to the server
+
+            success: function (result) {
+                // Handle successful update
+                if (result) {
+
+                    Swal.fire("Thêm giỏ hàng thành công.");
+                }
+            }
+
+        });
+    });
+
+</script>
+}
