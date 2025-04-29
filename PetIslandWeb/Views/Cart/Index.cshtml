@@ -7,7 +7,7 @@
 	decimal discount_span = total;
 
 	if(discount > 0 && discount < 1){
-		total = total * discount;
+		total = total * (1 - discount);
 	}
 	else{
 		total = total - discount;
