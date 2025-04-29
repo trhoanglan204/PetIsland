@@ -71,14 +71,14 @@ namespace PetIslandWeb.Controllers
             var currentUserEmail = User.Identity?.Name ?? "";
 
             var topPositive = await _dataContext.RatingEntries
-				.Where(r => r.ProductId == Id && r.Email != currentUserEmail)
+				.Where(r => r.ProductId == Id && r.Email != currentUserEmail && r.Star >= 3)
 				.OrderByDescending(r => r.Star)
                 .ThenByDescending(r => r.Id)
                 .Take(5)
 				.ToListAsync();
 
             var topNegative = await _dataContext.RatingEntries
-                .Where(r => r.ProductId == Id && r.Email != currentUserEmail)
+                .Where(r => r.ProductId == Id && r.Email != currentUserEmail && r.Star < 3)
                 .OrderBy(r => r.Star)
                 .ThenBy(r => r.Id)
                 .Take(5)
