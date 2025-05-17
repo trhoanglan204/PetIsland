@@ -23,7 +23,7 @@ else
         {
             <li>
                 <a href="@Url.Action("Detail","Pet", new { id = pet.Id}, protocol: Context.Request.Scheme)">
-                    <img src="~/image/pets/@pet.Image" alt="@pet.Name" style="width:100px;height:100px;" />
+                    <img src="~/images/pets/@pet.Image" alt="@pet.Name" style="width:100px;height:100px;" />
                     @pet.Name
                 </a>
             </li>
