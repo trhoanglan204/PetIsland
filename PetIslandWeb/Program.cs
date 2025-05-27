@@ -71,11 +71,11 @@ namespace PetIslandWeb
                 options.LoginPath = "/Account/Login";
                 options.AccessDeniedPath = "/Account/AccessDenied";
                 // Cookie settings.
-                options.Cookie.HttpOnly = true;
-                options.SlidingExpiration = true;
+                //options.Cookie.HttpOnly = true;
+                //options.SlidingExpiration = true;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; //Use Always for HTTPS | None for dev mode
-                options.Cookie.SameSite = SameSiteMode.None; //Prevent Cross-Site Request Forgery (CSRF)
+                //options.Cookie.SecurePolicy = CookieSecurePolicy.Always; //Use Always for HTTPS | None for dev mode
+                //options.Cookie.SameSite = SameSiteMode.None; //Prevent Cross-Site Request Forgery (CSRF)
             });
 
             builder.Services.AddAuthentication()
