@@ -1,47 +1,48 @@
 ﻿@model SearchVM
 
 @{
-	var searchstring = ViewBag.KeyWord;
-    var totalItems = (Model.Pets?.Count() ?? 0) + (Model.Products?.Count() ?? 0);
+    var searchstring = ViewBag.KeyWord;
+
+    var totalItems = Model == null ? 0 : (Model.Pets?.Count() ?? 0) + (Model.Products?.Count() ?? 0);
 }
 
 <h3>Search Results for "@searchstring"</h3>
 
-@if (totalItems == 0)
+@if (Model == null || totalItems == 0)
 {
     <p>No results found for @searchstring</p>
 }
 else
 {
-	<p>Found @totalItems items.</p>
+    <p>Found @totalItems items.</p>
+    @if (Model.Pets != null && Model.Pets.Any())
+    {
+        <ul>
+            @foreach (var pet in Model.Pets)
+            {
+                <li>
+                    <a href="@Url.Action("Detail","Pet", new { id = pet.Id}, protocol: Context.Request.Scheme)">
+                        <img src="~/images/pets/@pet.Image" alt="@pet.Name" style="width:100px;height:100px;" />
+                        @pet.Name
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+
+    @if (Model.Products != null && Model.Products.Any())
+    {
+        <ul>
+            @foreach (var product in Model.Products)
+            {
+                <li>
+                    <a href="@Url.Action("Detail","Pet", new { id = product.Id}, protocol: Context.Request.Scheme)">
+                        <img src="~/images/products/@product.Image" alt="@product.Name" style="width:100px;height:100px;" />
+                        @product.Name
+                    </a>
+                </li>
+            }
+        </ul>
+    }
 }
 
-@if (Model.Pets != null && Model.Pets.Any())
-{
-    <ul>
-        @foreach (var pet in Model.Pets)
-        {
-            <li>
-                <a href="@Url.Action("Detail","Pet", new { id = pet.Id}, protocol: Context.Request.Scheme)">
-                    <img src="~/images/pets/@pet.Image" alt="@pet.Name" style="width:100px;height:100px;" />
-                    @pet.Name
-                </a>
-            </li>
-        }
-    </ul>
-}
-
-@if (Model.Products != null && Model.Products.Any())
-{
-    <ul>
-        @foreach (var product in Model.Products)
-        {
-            <li>
-                <a href="@Url.Action("Detail","Pet", new { id = product.Id}, protocol: Context.Request.Scheme)">
-                    <img src="~/images/products/@product.Image" alt="@product.Name" style="width:100px;height:100px;" />
-                    @product.Name
-                </a>
-            </li>
-        }
-    </ul>
-}

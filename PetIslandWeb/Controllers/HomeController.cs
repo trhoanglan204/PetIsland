@@ -125,7 +125,7 @@ public class HomeController : Controller
         ViewBag.KeyWord = searchString;
         if (pets.Count == 0 && products.Count == 0)
         {
-            return View();
+            return View(null);
         }
         var searchResult = new SearchVM
         {
