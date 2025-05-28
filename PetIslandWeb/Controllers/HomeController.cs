@@ -116,12 +116,19 @@ public class HomeController : Controller
         {
             return RedirectToAction("Index");
         }
-        var pets = await _context.Pets
-            .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
-            .ToListAsync();
-        var products = await _context.Products
-            .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
-            .ToListAsync();
+
+        //var pets = await _context.Pets
+        //    .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
+        //    .ToListAsync();
+        //var products = await _context.Products
+        //    .Where(p => EF.Functions.Like(p.Name, $"%{searchString}%") || EF.Functions.Like(p.Description, $"%{searchString}%"))
+        //    .ToListAsync();
+
+        var petSql = $"SELECT * FROM Pets WHERE Name LIKE '%{searchString}%' OR Description LIKE '%{searchString}%'";
+        var productSql = $"SELECT * FROM Products WHERE Name LIKE '%{searchString}%' OR Description LIKE '%{searchString}%'";
+        var pets = await _context.Pets.FromSqlRaw(petSql).ToListAsync();
+        var products = await _context.Products.FromSqlRaw(productSql).ToListAsync();
+
         ViewBag.KeyWord = searchString;
         if (pets.Count == 0 && products.Count == 0)
         {

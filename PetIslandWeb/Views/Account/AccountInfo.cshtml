@@ -76,9 +76,11 @@
                             <label>Mã bưu điện</label>
                             <input asp-for="PostalCode" class="form-control" />
                         </div>
-
-                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                        <a asp-controller="Home" asp-action="Index" class="btn btn-default">Huỷ</a>
+                        <div class="form-group mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">❌ Huỷ</a>
+                            <a asp-controller="Account" asp-action="ResetPassword" class="btn btn-warning">🔐 Đổi mật khẩu</a>
+                        </div>
                     </form>
                 </div>
             </div>

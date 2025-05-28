@@ -1,16 +1,25 @@
-# TODO List
-You can find idea to continue my code here, or contribute to make the project better:
+# 🐞 TODO: Add More Vulnerabilities for Pentesting
 
-[] Dynamic calculate distance shipping cost (see in [GeocodingService.cs](PetIslandWeb/Services/ORS/GeocodingService.cs))
+This list includes additional bugs that can be added to extend this branch:
 
-[] Center the Slider (see in [_SliderPartial.cshtml](PetIslandWeb/Views/Shared/_SliderPartial.cshtml))
+## ✅ Already Implemented
+- [x] SQL Injection (SQLi)
+- [x] Cross-Site Scripting (XSS)
 
-[x] Recalculate Total price after apply coupon for discount (% and numeric)
+## 🧪 Recommended Additions
+- [ ] Insecure File Upload (e.g., no extension check, upload `.html` or `.aspx`)
+- [ ] Command Injection (e.g., user input passed to `Process.Start`)
+- [ ] Insecure Direct Object Reference (IDOR)
+- [ ] Broken Authentication (hardcoded password, weak session logic)
+- [ ] Cross-Site Request Forgery (CSRF)
+- [ ] Sensitive Data Exposure (e.g., display connection strings)
+- [ ] Security Misconfiguration (e.g., verbose error pages)
+- [ ] Unvalidated Redirects and Forwards
+- [ ] Clickjacking (no `X-Frame-Options`)
+- [ ] Reflected File Download
 
-[] Add banner for new release coupon (optional)
+## Notes
+- Each vulnerability should be **clearly documented** in code or comments.
+- Ensure students can **trigger and understand** each issue easily.
 
-[] Multi pictures for each product/pet (add carousel to navigate images)
-
-[] Add Zoom for images
-
-[] Refactor the Rating logic, show as Paginate
+> Want to build a full vulnerable lab? Gradually implement the OWASP Top 10.
