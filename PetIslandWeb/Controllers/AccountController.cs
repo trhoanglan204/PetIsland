@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using PetIslandWeb.Areas.Admin.Controllers;
 using System.Drawing;
+using System.ComponentModel.DataAnnotations;
 
 #pragma warning disable IDE0290
 
@@ -107,10 +108,13 @@ public class AccountController : Controller
 		TempData["success"] = "An email has been sent to your registered email address with password reset instructions.";
 		return RedirectToAction("ForgotPass", "Account");
 	}
-	public IActionResult ForgotPass()
+
+	[HttpGet]
+    public IActionResult ForgotPass()
 	{
 		return View();
 	}
+
 	public async Task<IActionResult> NewPass(AppUserModel user, string token)
 	{
 		var checkuser = await _userManager.Users
@@ -129,8 +133,44 @@ public class AccountController : Controller
 		}
 		return View();
 	}
-	//TODO: implement trang doi mat khau
-	public async Task<IActionResult> UpdateNewPassword(AppUserModel user)
+
+    [HttpGet]
+	[Authorize]
+    public IActionResult ResetPassword()
+    {
+        return View();
+    }
+
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> ResetPassword(ResetPasswordVM model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+        var changePassResult = await _userManager.ChangePasswordAsync(user, model.OldPassword!, model.NewPassword!);
+        if (!changePassResult.Succeeded)
+        {
+            foreach (var error in changePassResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return View(model);
+        }
+        await _signInManager.RefreshSignInAsync(user); // Refresh session
+        TempData["Success"] = "Your password has been changed successfully!";
+
+        return RedirectToAction("AccountInfo", "Account");
+    }
+
+    public async Task<IActionResult> UpdateNewPassword(AppUserModel user)
 	{
 		var checkuser = await _userManager.Users
 			.Where(u => u.Email == user.Email)
@@ -155,6 +195,8 @@ public class AccountController : Controller
 			return RedirectToAction("ForgotPass", "Account");
 		}
 	}
+
+	[HttpGet]
 	public async Task<IActionResult> History()
 	{
 		if (!(User?.Identity?.IsAuthenticated ?? false))
@@ -171,13 +213,17 @@ public class AccountController : Controller
 		return View(Orders);
 	}
 
-	public async Task<IActionResult> CancelOrder(string ordercode)
+    public async Task<IActionResult> CancelOrder(string ordercode)
 	{
 		if (!(User?.Identity?.IsAuthenticated ?? false))
 		{
 			return RedirectToAction("Login", "Account");
 		}
-		try
+        if (string.IsNullOrEmpty(ordercode))
+        {
+            return BadRequest("Order code is required.");
+        }
+        try
 		{
 			var order = await _context.Orders.Where(o => o.OrderCode == ordercode).FirstAsync();
 			order.Status = 3;
