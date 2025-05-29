@@ -15,4 +15,6 @@ You can find idea to continue my code here, or contribute to make the project be
 
 - [ ] Refactor the Rating logic, show as Paginate
 
+- [ ] Add chat box with AI (optional)
+
 - [x] Add page change password
