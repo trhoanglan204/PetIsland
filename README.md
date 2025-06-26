@@ -97,7 +97,7 @@ Employee: (test)
 Customer: (test)
 
 - username: vip_customer
-- Mật khẩu: Customer@123*
+- password: Customer@123*
 
 > for other user: can create your custom account
 
@@ -109,7 +109,7 @@ If not seeded automatically, you can add seeding logic in `DbInitializer.cs.`
 - **Shopping Cart**: Users can add products to their shopping cart and proceed to checkout.
 - **Order Management**: Track orders, manage order details, and apply coupons.
 - **Payment Integration**: With payment gateways like Momo and VnPay, users can complete their purchases.
-
+- **Chatting anonymous**: With whatever identical name, you can chat to everyone
 
 ## IV. Deployment (Hosting)
 ### Manual Deployment
