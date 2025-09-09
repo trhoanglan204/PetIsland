@@ -64,8 +64,13 @@ Open PetIslandWeb/appsettings.json and update the connection string:
 
 #### Momo and VnPay Payment Integration
 - Momo Payment: You can integrate Momo's payment gateway by following the official [Momo](https://developers.momo.vn/v3/vi/download/) documentation. It provides a full API for payment processing.
+> ⚠️ for demo and test, the fail result when applied paid in Momo also set to success, change if needed
 
 - VnPay Payment: VnPay integration is set up using their sandbox environment. You can read more and get API details here: [VnPay Sandbox](https://sandbox.vnpayment.vn/apis/vnpay-demo/).
+
+#### Google logged in
+Make sure to check fallback in your url setting: ``console.cloud.google.com/auth/clients``
+> ex: https://localhost:7021/signin-google
 
 ### 3. Create the database
 Run the migration to create the database:
@@ -139,10 +144,12 @@ If you find any bugs or issues while using the PetIsland app, please report them
 
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
+## Contribute
+
+You want to contribute your code? See [TODO.md](/TODO.md)
+
 ## Contact
 
 If you have any questions, suggestions, or feedback, feel free to reach out via:
 
 - [GitHub Issues](https://github.com/trhoanglan204/petisland/issues) — for bug reports or feature requests
-
-You want to contribute your code? --> DM us via our mail

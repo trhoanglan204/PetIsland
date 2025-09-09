@@ -3,26 +3,31 @@
     ViewData["Title"] = "Liên hệ";
 }
 
-
 <div class="container mt-4">
     <h2>Thông tin liên hệ</h2>
-        @if(Model == null){
-            <address>
-                Chua them thong tin
-            </address>
-        }
-        else{
-	        <div class="col-sm-5 col-md-5">
-		        @Html.Raw(@Model.Map)
-		        <h5>Địa chỉ: @Model.Address</h5>
-	        </div>
-			<div class="col-sm-4">
-				<div class="address" style="float: right; margin-right: 20px;">
-					<h5><b>Name : @Model.Name</b></h5>
-					<h5>Email : @Model.Email</h5>
-					<h5>@Model.Phone</h5>
-				</div>
-			</div>
-		
-        }
+    @if (Model == null)
+    {
+        <address>
+            Chưa thêm thông tin
+        </address>
+    }
+    else
+    {
+        <div class="row">
+            <!-- Bản đồ -->
+            <div class="col-md-7 mb-3">
+                @Html.Raw(Model.Map)
+                <h5>Địa chỉ: @Model.Address</h5>
+            </div>
+
+            <!-- Thông tin liên hệ -->
+            <div class="col-md-5 d-flex align-items-start justify-content-end">
+                <div class="address">
+                    <h5><b>Name: @Model.Name</b></h5>
+                    <h5>Email: @Model.Email</h5>
+                    <h5>@Model.Phone</h5>
+                </div>
+            </div>
+        </div>
+    }
 </div>

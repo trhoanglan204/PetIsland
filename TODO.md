@@ -18,3 +18,7 @@ You can find idea to continue my code here, or contribute to make the project be
 - [ ] Add chat box with AI (optional)
 
 - [x] Add page change password
+
+- [x] Add notify if not logged in when click "Add to Cart"
+
+- [ ] Add Paypal method (optional)

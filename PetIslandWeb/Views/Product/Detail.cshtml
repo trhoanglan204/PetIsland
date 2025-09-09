@@ -55,9 +55,18 @@
 						</span>
 						<label style="margin-left: 10px;">Quantity:</label>
 						<input type="number" name="quantity" value="1" min="1" class="form-control d-inline-block quantity-input" style="width: 70px; text-align: center;" />
-						<button class="btn btn-warning add-to-cart ml-2" data-product_id="@Model.Product.Id">
-							<i class="fa fa-shopping-cart"></i>Add to cart
-						</button>
+						@if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <button class="btn btn-warning add-to-cart ml-2" data-product_id="@Model.Product.Id">
+                                <i class="fa fa-shopping-cart"></i> Add to cart
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-warning add-to-cart-login ml-2">
+                                <i class="fa fa-shopping-cart"></i> Add to cart
+                            </button>
+                        }
 					</span>
 					<p>
 						<b>Availability:</b>
@@ -86,7 +95,6 @@
 					</p>
 					<p><b>Brand:</b> @Model.Product.Brand?.Name</p>
 					<p><b>Category:</b> @Model.Product.ProductCategory?.Name</p>
-					<a href=""><img src="images/product-details/share.png" class="share img-responsive" alt="" /></a>
 					@if (User.Identity?.IsAuthenticated ?? false)
 					{
 						<button class="btn btn-default add-btn-wishlist" data-product_id="@Model.Product.Id">
@@ -318,7 +326,6 @@
 			var button = $(this);
 			var Id = button.data("product_id");
 			var quantity = button.closest('div').find('.quantity-input').val();
-			//alert(product_id);
 			$.ajax({
 				type: "POST",
 				url: "@Url.Action("Add", "Cart")",
@@ -333,7 +340,9 @@
 				}
 			});
 		});
-
+		$('.add-to-cart-login').click(function () {
+			Swal.fire("Vui lòng đăng nhập để thêm giỏ hàng.");
+		});
 	</script>
 	<script>
 		$(document).ready(function () {
