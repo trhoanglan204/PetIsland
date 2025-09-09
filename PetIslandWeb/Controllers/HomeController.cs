@@ -163,7 +163,7 @@ public class HomeController : Controller
                     MSSV = "AT19N0123",
                     ImageUrl = "shin_dev.jpg",
                     Nickname = "hlaan",
-                    LinkFB = "https://www.facebook.com/lan.truonghoang.31",
+                    LinkFB = "https://www.facebook.com/lanth.09",
                     LinkLinkedin = "https://www.linkedin.com/in/trhoanglan04/"
                 },
                 new GroupMemberModel

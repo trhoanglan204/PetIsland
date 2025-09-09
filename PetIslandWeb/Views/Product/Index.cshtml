@@ -58,9 +58,18 @@
                     <td>@Html.Raw(@product.Description)</td>
                     <td>
                         <a class="btn btn-default" asp-action="Detail" asp-route-id="@product.Id">Chi tiết</a>
-                        <button class="btn btn-warning add-to-cart ml-2">
-							<i class="fa fa-shopping-cart"></i>Add to cart
-						</button>
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <button class="btn btn-warning add-to-cart ml-2" data-product_id="@product.Id">
+                                <i class="fa fa-shopping-cart"></i> Add to cart
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-warning add-to-cart-login ml-2">
+                                <i class="fa fa-shopping-cart"></i> Add to cart
+                            </button>
+                        }
                     </td>
                 </tr>
             }
@@ -101,6 +110,8 @@ else
 
         });
     });
-
+    $('.add-to-cart-login').click(function () {
+        Swal.fire("Vui lòng đăng nhập để thêm giỏ hàng.");
+    });
 </script>
 }
