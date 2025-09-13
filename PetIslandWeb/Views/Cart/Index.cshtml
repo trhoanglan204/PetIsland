@@ -72,7 +72,9 @@
 							<td rowspan="5">
 								Grand Total: <p class="cart_total_price">@grandTotal.ToString("#,##0 đ")</p>
 								<form>
-									Coupon Code: <input type="text" value="@Model.CouponCode" class="form-control coupon-value" /><span class="text text-success">@Html.Raw(Model.CouponCode)</span> <br />
+									Coupon Code: 
+									<input type="text" value="@Model.CouponCode" class="form-control coupon-value" />
+									<span class="text text-success">@Html.Raw(Model.CouponDescription)</span> <br />
 									
 									<input type="button" value="Apply" class="btn btn-sm btn-primary btn-apply-coupon" />
 								</form>
@@ -82,7 +84,9 @@
 									<p style="color:green; font-weight:bold;">
 										Discount: -@discount_span.ToString("#,##0 đ")
 									</p>
-									<a style="cursor:pointer" class="btn-delete-coupon">Xóa coupon</a>
+									<p>
+										<a style="cursor:pointer" class="btn-delete-coupon">Xóa coupon</a>
+									</p>
 								}
 								
 								Ship cost: <p class="cart_total_price">@Model.ShippingPrice.ToString("#,##0 đ")</p>

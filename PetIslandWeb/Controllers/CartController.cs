@@ -35,6 +35,7 @@ public class CartController : Controller
 
         //Nhận Coupon code từ cookie
         var coupon_code = Request.Cookies["CouponTitle"];
+        var coupon_description = Request.Cookies["CouponDescription"];
         var couponDiscountPriceCookie = Request.Cookies["CouponDiscountPrice"];
         decimal couponDiscountPrice = 0;
 
@@ -49,6 +50,7 @@ public class CartController : Controller
             GrandTotal = cartItems.Sum(x => x.Quantity * x.Price),
             ShippingPrice = shippingPrice,
             CouponCode = coupon_code,
+            CouponDescription = coupon_description,
             CouponDiscountPrice = couponDiscountPrice,
         };
 
@@ -217,7 +219,8 @@ public class CartController : Controller
             return Ok(new { success = false, message = "Coupon not existed" });
         }
         decimal discount = validCoupon.Price;
-        string couponTitle = validCoupon.Name + " | " + validCoupon.Description;
+        string couponTitle = validCoupon.Name;
+        string couponDescription = validCoupon.Description;
         TimeSpan remainingTime = validCoupon.DateExpired - DateTime.Now;
         int daysRemaining = remainingTime.Days;
 
@@ -234,8 +237,9 @@ public class CartController : Controller
                 };
 
                 Response.Cookies.Append("CouponTitle", couponTitle, cookieOptions);
+                Response.Cookies.Append("CouponDescription", couponDescription, cookieOptions);
                 Response.Cookies.Append("CouponDiscountPrice", discount.ToString(), cookieOptions);
-                return Ok(new { success = true, message = "Coupon applied successfully"  });
+                return Ok(new { success = true, message = "Coupon applied successfully" });
             }
             catch (Exception ex)
             {
