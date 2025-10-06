@@ -9,7 +9,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using PetIsland.Models.Momo;
 using PetIsland.Models.Vnpay;
+using PetIsland.Models.Paypal;
 using PetIslandWeb.Services.Momo;
+using PetIslandWeb.Services.Paypal;
 
 #pragma warning disable IDE0290
 
@@ -22,12 +24,14 @@ public class CheckoutController : Controller
 	private readonly IEmailSender _emailSender;
 	private readonly IVnPayService _vnPayService;
     private readonly IMomoService _momoService;
-    public CheckoutController(IEmailSender emailSender, ApplicationDbContext context, IVnPayService vnPayService, IMomoService momoService)
+    private readonly IPaypalService _paypalService;
+    public CheckoutController(IEmailSender emailSender, ApplicationDbContext context, IVnPayService vnPayService, IMomoService momoService, IPaypalService paypalService)
 	{
 		_dataContext = context;
 		_emailSender = emailSender;
 		_vnPayService = vnPayService;
         _momoService = momoService;
+        _paypalService = paypalService;
     }
     public IActionResult Index()
 	{
@@ -118,10 +122,10 @@ public class CheckoutController : Controller
 	}
 
     [HttpGet]
-    public async Task<IActionResult> PaymentCallBack()
+    public async Task<IActionResult> PaymentCallBackMomo()
     {
-        var response = _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
         var requestQuery = HttpContext.Request.Query;
+        var response = _momoService.PaymentExecute(requestQuery);
         if (requestQuery["resultCode"] != 0) //test -> giao dich k thanh cong luu db
         {
             var newMomoInsert = new MomoInfoModel
@@ -171,4 +175,64 @@ public class CheckoutController : Controller
         }
         return Json(response);
 	}
+
+    [HttpPost]
+    public async Task<IActionResult> CapturePaypalOrder(string orderID, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _paypalService.CaptureOrder(orderID);
+
+            if (response == null || response.status != "COMPLETED")
+            {
+                TempData["success"] = "Giao dịch Paypal không thành công";
+                return RedirectToAction("Index", "Cart");
+            }
+
+            var usdAmount = decimal.Parse(response.purchase_units.First().payments.captures.First().amount.value);
+            var vndAmout = (usdAmount * 25000m);
+
+            // Lưu database đơn hàng của mình
+            var newPaypalInsert = new PaypalInfoModel
+            {
+                OrderId = response.id,
+                status = response.status,
+                FullName = User.FindFirstValue(ClaimTypes.Email),
+                Amount = vndAmout,
+                OrderInfo = "Thanh toán qua Paypal",
+                DatePaid = DateTime.Now,
+            };
+
+            _dataContext.PaypalInfo.Add(newPaypalInsert);
+            await _dataContext.SaveChangesAsync(cancellationToken);
+            await Checkout("Paypal", response.id);
+
+            return Json(new { orderId = newPaypalInsert.OrderId });
+        }
+        catch (Exception ex)
+        {
+            var error = new { ex.GetBaseException().Message };
+            return BadRequest(error);
+        }
+    }
+
+
+    [HttpGet]
+    public  async Task<IActionResult> PaymentCallbackPaypal(string orderId)
+    {
+        var order = await _dataContext.PaypalInfo.FirstOrDefaultAsync(o => o.OrderId == orderId);
+        if(order == null)
+        {
+            return View("Error");
+        }
+        if (order.status == "COMPLETED")
+        {
+            return View(order);
+        }
+        else
+        {
+            TempData["success"] = "Giao dịch Paypal không thành công";
+            return RedirectToAction("Index", "Cart");
+        }
+    }
 }

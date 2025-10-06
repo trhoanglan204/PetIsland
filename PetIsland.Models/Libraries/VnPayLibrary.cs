@@ -12,7 +12,7 @@ namespace PetIsland.Models.Libraries
 	{
 		private readonly SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
 		private readonly SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
-		public PaymentResponseModel GetFullResponseData(IQueryCollection collection, string hashSecret)
+		public static PaymentResponseModel GetFullResponseData(IQueryCollection collection, string hashSecret)
 		{
 			var vnPay = new VnPayLibrary();
 			foreach (var (key, value) in collection)
@@ -47,7 +47,7 @@ namespace PetIsland.Models.Libraries
 				VnPayResponseCode = vnpResponseCode
 			};
 		}
-		public string GetIpAddress(HttpContext context)
+		public static string GetIpAddress(HttpContext context)
 		{
 			var ipAddress = string.Empty;
 			try
