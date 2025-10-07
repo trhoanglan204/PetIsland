@@ -234,7 +234,7 @@
                             }
                             return response.json();
                         }).then((result) => {
-                            window.location.href = `/Checkout/PaymentCallbackPaypal?orderId=${encodeURIComponent(result.orderId)};
+                            window.location.href = `/Checkout/PaymentCallbackPaypal?orderId=${encodeURIComponent(result.orderId)}`;
                         })
                         .catch(error => alert(error.message));
             },

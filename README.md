@@ -69,6 +69,7 @@ Open PetIslandWeb/appsettings.json and update the connection string:
 - VnPay Payment: VnPay integration is set up using their sandbox environment. You can read more and get API details here: [VnPay Sandbox](https://sandbox.vnpayment.vn/apis/vnpay-demo/).
 
 - Paypal Payment: Paypal also support testing by using their sandbox [Developer Paypal](https://developer.paypal.com/)
+> exchange currency: 1$ = 25.000vnd
 #### Google logged in
 Make sure to check fallback in your url setting: ``console.cloud.google.com/auth/clients``
 > ex: https://localhost:7021/signin-google
