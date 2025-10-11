@@ -5,6 +5,6 @@ namespace PetIslandWeb.Services.Momo;
 
 public interface IMomoService
 {
-	Task<MomoCreatePaymentResponseModel> CreatePaymentAsync(OrderInfo model);
-	MomoExecuteResponseModel PaymentExecuteAsync(IQueryCollection collection);
+	Task<MomoCreatePaymentResponseModel?> CreatePaymentAsync(OrderInfo model);
+	MomoExecuteResponseModel PaymentExecute(IQueryCollection collection);
 }

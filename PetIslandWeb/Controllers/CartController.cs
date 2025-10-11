@@ -7,6 +7,7 @@ using PetIsland.DataAccess.Data;
 using PetIsland.Models;
 using PetIsland.Models.ViewModels;
 using PetIsland.Utility;
+using PetIslandWeb.Services.Paypal;
 
 #pragma warning disable IDE0290
 
@@ -16,9 +17,11 @@ namespace PetIslandWeb.Controllers;
 public class CartController : Controller
 {
     private readonly ApplicationDbContext _context;
-    public CartController(ApplicationDbContext context)
+    private readonly IPaypalService _paypalService;
+    public CartController(ApplicationDbContext context, IPaypalService paypalService)
     {
         _context = context;
+        _paypalService = paypalService;
     }
     public IActionResult Index()
     {
@@ -35,6 +38,7 @@ public class CartController : Controller
 
         //Nhận Coupon code từ cookie
         var coupon_code = Request.Cookies["CouponTitle"];
+        var coupon_description = Request.Cookies["CouponDescription"];
         var couponDiscountPriceCookie = Request.Cookies["CouponDiscountPrice"];
         decimal couponDiscountPrice = 0;
 
@@ -49,8 +53,11 @@ public class CartController : Controller
             GrandTotal = cartItems.Sum(x => x.Quantity * x.Price),
             ShippingPrice = shippingPrice,
             CouponCode = coupon_code,
+            CouponDescription = coupon_description,
             CouponDiscountPrice = couponDiscountPrice,
         };
+
+        ViewBag.PaypalClientId = _paypalService.GetClientId();
 
         return View(cartVM);
     }
@@ -82,7 +89,7 @@ public class CartController : Controller
 
     public IActionResult Decrease(int Id)
     {
-        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
+        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
         CartItemModel? cartItem = cart.Where(c => c.ProductId == Id).FirstOrDefault();
         if (cartItem == null)
         {
@@ -113,7 +120,7 @@ public class CartController : Controller
     {
         ProductModel? product = await _context.Products.Where(p => p.Id == Id).FirstOrDefaultAsync();
 
-        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
+        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
         CartItemModel? cartItem = cart.Where(c => c.ProductId == Id).FirstOrDefault();
         if (cartItem == null)
         {
@@ -146,7 +153,7 @@ public class CartController : Controller
     }
     public IActionResult Remove(int Id)
     {
-        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart");
+        List<CartItemModel> cart = HttpContext.Session.GetJson<List<CartItemModel>>("Cart") ?? [];
         cart.RemoveAll(p => p.ProductId == Id);
         if (cart.Count == 0)
         {
@@ -217,7 +224,8 @@ public class CartController : Controller
             return Ok(new { success = false, message = "Coupon not existed" });
         }
         decimal discount = validCoupon.Price;
-        string couponTitle = validCoupon.Name + " | " + validCoupon.Description;
+        string couponTitle = validCoupon.Name;
+        string couponDescription = validCoupon.Description;
         TimeSpan remainingTime = validCoupon.DateExpired - DateTime.Now;
         int daysRemaining = remainingTime.Days;
 
@@ -234,8 +242,9 @@ public class CartController : Controller
                 };
 
                 Response.Cookies.Append("CouponTitle", couponTitle, cookieOptions);
+                Response.Cookies.Append("CouponDescription", couponDescription, cookieOptions);
                 Response.Cookies.Append("CouponDiscountPrice", discount.ToString(), cookieOptions);
-                return Ok(new { success = true, message = "Coupon applied successfully"  });
+                return Ok(new { success = true, message = "Coupon applied successfully" });
             }
             catch (Exception ex)
             {

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PetIsland.Models;
 using PetIsland.Models.Momo;
 using PetIsland.Models.Vnpay;
+using PetIsland.Models.Paypal;
 namespace PetIsland.DataAccess.Data;
 
 #pragma warning disable IDE0290
@@ -36,4 +37,5 @@ public class ApplicationDbContext : IdentityDbContext<AppUserModel>
     public DbSet<ContactModel> Contact { get; set; }
     public DbSet<MomoInfoModel> MomoInfo { get; set; }
     public DbSet<VnpayInfoModel> VnpayInfo { get; set; }
+    public DbSet<PaypalInfoModel> PaypalInfo { get; set; }
 }

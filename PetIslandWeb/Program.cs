@@ -1,16 +1,18 @@
-using PetIsland.DataAccess.Data;
-using PetIsland.Utility;
-using PetIsland.DataAccess.DbInitializer;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
+using PetIsland.DataAccess.Data;
+using PetIsland.DataAccess.DbInitializer;
 using PetIsland.Models;
-using PetIslandWeb.Hubs;
 using PetIsland.Models.Momo;
+using PetIsland.Utility;
+using PetIslandWeb.Hubs;
 using PetIslandWeb.Services.Momo;
-using PetIslandWeb.Services.Vnpay;
-using Microsoft.AspNetCore.Authentication.Google;
 using PetIslandWeb.Services.ORS;
+using PetIslandWeb.Services.Paypal;
+using PetIslandWeb.Services.Vnpay;
 
 namespace PetIslandWeb
 {
@@ -78,8 +80,13 @@ namespace PetIslandWeb
                 options.Cookie.SameSite = SameSiteMode.None; //Prevent Cross-Site Request Forgery (CSRF)
             });
 
-            builder.Services.AddAuthentication()
-            .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme; // default challenge = Google
+            })
+            .AddCookie() // session management
+            .AddGoogle(options =>
             {
                 options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value!;
                 options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value!;
@@ -104,10 +111,14 @@ namespace PetIslandWeb
             //Connect VNPay API
             builder.Services.AddScoped<IVnPayService, VnPayService>();
 
+            //Connect Paypal API
+            builder.Services.AddScoped<IPaypalService, PaypalService>();
+
             //builder.Services.AddHttpsRedirection(options =>
             //{
             //    options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-            //    options.HttpsPort = 7021;
+            //    //options.HttpsPort = 7021;
+            //    options.HttpsPort = 443;
             //});
 
             var app = builder.Build();
@@ -143,6 +154,9 @@ namespace PetIslandWeb
 
             app.MapRazorPages();
             app.MapHub<ChatHub>("/Realtime/Index");
+
+            app.MapControllers();
+
             await app.RunAsync();
 
             void SeedDatabase()

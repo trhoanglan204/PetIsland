@@ -1,0 +1,11 @@
+﻿@model PaypalInfoModel
+@{
+    ViewBag.Title = "Kết quả thanh toán";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var status = (Model.status == "COMPLETED") ? "Thành công" : "Thất Bại";
+}
+
+<h5>Thanh toán Paypal @status với:</h5>
+<h6>OrderId: @Model.OrderId</h6>
+<h6>Tổng số tiền: @Model.Amount</h6>
+<h5>Xem <a asp-controller="Account" asp-action="History">lịch sử đơn hàng đã đặt</a></h5>

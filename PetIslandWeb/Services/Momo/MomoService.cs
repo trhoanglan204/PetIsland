@@ -17,7 +17,7 @@ public class MomoService : IMomoService
 	{
 		_options = options;
 	}
-	public async Task<MomoCreatePaymentResponseModel> CreatePaymentAsync(OrderInfo model)
+	public async Task<MomoCreatePaymentResponseModel?> CreatePaymentAsync(OrderInfo model)
 	{
 		model.OrderId = DateTime.UtcNow.Ticks.ToString();
 		model.OrderInformation = "Khách hàng: " + model.FullName + ". Nội dung: " + model.OrderInformation;
@@ -48,15 +48,15 @@ public class MomoService : IMomoService
 			orderInfo = model.OrderInformation,
 			requestId = model.OrderId,
 			extraData = "",
-			signature = signature
-		};
+            signature
+        };
 		request.AddParameter("application/json", JsonConvert.SerializeObject(requestData), ParameterType.RequestBody);
 		var response = await client.ExecuteAsync(request);
 
 		return JsonConvert.DeserializeObject<MomoCreatePaymentResponseModel>(response.Content);
 	}
 
-	public MomoExecuteResponseModel PaymentExecuteAsync(IQueryCollection collection)
+	public MomoExecuteResponseModel PaymentExecute(IQueryCollection collection)
 	{
 		var amount = collection.First(s => s.Key == "amount").Value;
 		var orderInfo = collection.First(s => s.Key == "orderInfo").Value;
@@ -69,7 +69,7 @@ public class MomoService : IMomoService
 		};
 	}
 
-	private string ComputeHmacSha256(string message, string secretKey)
+	private static string ComputeHmacSha256(string message, string secretKey)
 	{
 		var keyBytes = Encoding.UTF8.GetBytes(secretKey);
 		var messageBytes = Encoding.UTF8.GetBytes(message);

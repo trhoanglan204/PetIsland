@@ -62,12 +62,14 @@ Open PetIslandWeb/appsettings.json and update the connection string:
 ```
 ⚠️ Make sure you've created the database PetIslandDb on SQL Server, or let EF create it automatically.
 
-#### Momo and VnPay Payment Integration
+#### E-wallet Payment Integration
 - Momo Payment: You can integrate Momo's payment gateway by following the official [Momo](https://developers.momo.vn/v3/vi/download/) documentation. It provides a full API for payment processing.
 > ⚠️ for demo and test, the fail result when applied paid in Momo also set to success, change if needed
 
 - VnPay Payment: VnPay integration is set up using their sandbox environment. You can read more and get API details here: [VnPay Sandbox](https://sandbox.vnpayment.vn/apis/vnpay-demo/).
 
+- Paypal Payment: Paypal also support testing by using their sandbox [Developer Paypal](https://developer.paypal.com/)
+> exchange currency: 1$ = 25.000vnd
 #### Google logged in
 Make sure to check fallback in your url setting: ``console.cloud.google.com/auth/clients``
 > ex: https://localhost:7021/signin-google
