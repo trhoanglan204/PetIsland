@@ -116,7 +116,7 @@ public class CheckoutController : Controller
                 }
             }
 
-			TempData["success"] = "Đơn hàng đã được tạo,vui lòng chờ duyệt đơn hàng nhé.";
+			TempData["success"] = "Đơn hàng đã được tạo";
 			return RedirectToAction("History", "Account");
 		}
 	}
