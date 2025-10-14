@@ -78,6 +78,18 @@ public class OrderController : Controller
         return View(vnpayInfo);
     }
 
+    [HttpGet]
+    [Route("PaymentPaypalInfo")]
+    public async Task<IActionResult> PaymentPaypalInfo(string orderId)
+    {
+        var paypalInfo = await _context.PaypalInfo.FirstOrDefaultAsync(m => m.OrderId == orderId);
+        if (paypalInfo == null)
+        {
+            return NotFound();
+        }
+        return View(paypalInfo);
+    }
+
     [HttpPost]
     [Route("UpdateOrder")]
     public async Task<IActionResult> UpdateOrder(string ordercode, int status)

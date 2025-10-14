@@ -77,7 +77,7 @@ namespace PetIslandWeb
                 options.SlidingExpiration = true;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always; //Use Always for HTTPS | None for dev mode
-                options.Cookie.SameSite = SameSiteMode.None; //Prevent Cross-Site Request Forgery (CSRF)
+                options.Cookie.SameSite = SameSiteMode.Lax; //Prevent Cross-Site Request Forgery (CSRF)
             });
 
             builder.Services.AddAuthentication(options =>
@@ -100,6 +100,7 @@ namespace PetIslandWeb
                     builder =>
                     {
                         builder.WithOrigins("http://localhost:5140")
+                        //builder.WithOrigins("http://crow1337-001-site1.ntempurl.com/")
                             .AllowAnyHeader()
                             .WithMethods("GET", "POST")
                             .AllowCredentials();
@@ -114,12 +115,12 @@ namespace PetIslandWeb
             //Connect Paypal API
             builder.Services.AddScoped<IPaypalService, PaypalService>();
 
-            //builder.Services.AddHttpsRedirection(options =>
-            //{
-            //    options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-            //    //options.HttpsPort = 7021;
-            //    options.HttpsPort = 443;
-            //});
+            builder.Services.AddHttpsRedirection(options =>
+            {
+                options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+                //options.HttpsPort = 7021;
+                options.HttpsPort = 443;
+            });
 
             var app = builder.Build();
 
