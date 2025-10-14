@@ -56,11 +56,14 @@
                         }
                         else if (item.Status == 2)
                         {
+                            <span class="text text-success">Đã xử lý</span>
+                        }
+                        else if (item.Status == 3)
+                        {
                             <span class="text text-success">Đã giao hàng</span>
                         }
                         else
                         {
-
                             <span class="text text-danger">Đã hủy</span>
                         }
                     </td>
@@ -84,6 +87,11 @@
                             {
                                 @method
                                 <a asp-route-orderId="@numid" asp-action="PaymentVnpayInfo" asp-controller="Order"><span class="text text-success">@numid</span></a>
+                            }
+                            else if (method == "Paypal")
+                            {
+                                @method
+                                <a asp-route-orderId="@numid" asp-action="PaymentPaypalInfo" asp-controller="Order"><span class="text text-success">@numid</span></a>
                             }
                         }
                     </td>
