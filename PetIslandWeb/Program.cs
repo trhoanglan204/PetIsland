@@ -13,6 +13,7 @@ using PetIslandWeb.Services.Momo;
 using PetIslandWeb.Services.ORS;
 using PetIslandWeb.Services.Paypal;
 using PetIslandWeb.Services.Vnpay;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace PetIslandWeb
 {
@@ -122,6 +123,13 @@ namespace PetIslandWeb
                 options.HttpsPort = 443;
             });
 
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
+
             var app = builder.Build();
 
             if (!app.Environment.IsDevelopment())
@@ -131,7 +139,8 @@ namespace PetIslandWeb
             }
 
             app.UseSession();
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
+            app.UseForwardedHeaders();
             app.UseStaticFiles();
             app.UseRouting();
 
