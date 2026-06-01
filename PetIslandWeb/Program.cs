@@ -14,11 +14,15 @@ using PetIslandWeb.Services.ORS;
 using PetIslandWeb.Services.Paypal;
 using PetIslandWeb.Services.Vnpay;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Security.Cryptography.X509Certificates;
 
 namespace PetIslandWeb
 {
     public class Program
     {
+        private static readonly int portHTTP    = 8080;
+        private static readonly int portHTTPS   = 8081;
+
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -100,8 +104,7 @@ namespace PetIslandWeb
                 options.AddDefaultPolicy(
                     builder =>
                     {
-                        builder.WithOrigins("http://localhost:5140")
-                        //builder.WithOrigins("http://crow1337-001-site1.ntempurl.com/")
+                        builder.WithOrigins($"http://localhost:{portHTTP}")
                             .AllowAnyHeader()
                             .WithMethods("GET", "POST")
                             .AllowCredentials();
@@ -119,8 +122,7 @@ namespace PetIslandWeb
             builder.Services.AddHttpsRedirection(options =>
             {
                 options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-                //options.HttpsPort = 7021;
-                options.HttpsPort = 443;
+                options.HttpsPort = portHTTPS;
             });
 
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -128,6 +130,30 @@ namespace PetIslandWeb
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 options.KnownNetworks.Clear();
                 options.KnownProxies.Clear();
+            });
+
+            builder.WebHost.ConfigureKestrel(options => 
+            {
+                var certPath = builder.Configuration["KestrelCertificates:CertPath"];
+                var keyPath = builder.Configuration["KestrelCertificates:KeyPath"];
+
+                options.ListenAnyIP(portHTTPS, listenOption => 
+                {
+                    if (!string.IsNullOrEmpty(certPath) && !string.IsNullOrEmpty(keyPath))
+                    {
+                        // 1. Load the ephemeral certificate from the PEM files
+                        using var ephemeralCert = X509Certificate2.CreateFromPemFile(certPath, keyPath);
+
+                        // 2. Export it to a PFX format in memory (this makes it compatible with Windows)
+                        var pfxBytes = ephemeralCert.Export(X509ContentType.Pfx);
+
+                        // 3. Re-import it as a standard certificate that Windows Schannel/Kestrel can use
+                        var windowsCompatibleCert = new X509Certificate2(pfxBytes);
+
+                        // 4. Use the compatible certificate
+                        listenOption.UseHttps(windowsCompatibleCert);
+                    }
+                });
             });
 
             var app = builder.Build();
@@ -139,7 +165,7 @@ namespace PetIslandWeb
             }
 
             app.UseSession();
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
             app.UseForwardedHeaders();
             app.UseStaticFiles();
             app.UseRouting();
